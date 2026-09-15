@@ -7,15 +7,11 @@ android {
         applicationId 'dev.dumbnavigator'
         minSdk 26
         targetSdk 36
-        versionCode 3
-        versionName '0.3.0-chromium'
+        versionCode 4
+        versionName '0.4.0-internal-chromium'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-}
-
-dependencies {
-    implementation 'androidx.webkit:webkit:1.14.0'
 }
