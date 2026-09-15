@@ -2,130 +2,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#07090F">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <LinearLayout
-            android:id="@+id/tabbar"
-            android:layout_width="match_parent"
-            android:layout_height="42dp"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:gravity="center_vertical"
-            android:background="#0B0F18">
-            <TextView
-                android:id="@+id/tabTitle"
-                android:layout_width="0dp"
-                android:layout_height="34dp"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:paddingStart="14dp"
-                android:text="dumbNavigator"
-                android:textColor="#EAF0FF"
-                android:textSize="13sp"
-                android:background="@drawable/address_glass" />
-            <Button
-                android:id="@+id/newTab"
-                android:layout_width="42dp"
-                android:layout_height="38dp"
-                android:layout_marginStart="6dp"
-                android:text="+"
-                android:textSize="21sp"
-                android:textColor="#F2F6FF"
-                android:backgroundTint="#263A52"
-                android:contentDescription="Nueva pestaña" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+        <LinearLayout android:id="@+id/tabbar" android:layout_width="match_parent" android:layout_height="42dp" android:paddingStart="8dp" android:paddingEnd="8dp" android:gravity="center_vertical" android:background="#0B0F18">
+            <TextView android:id="@+id/tabTitle" android:layout_width="0dp" android:layout_height="34dp" android:layout_weight="1" android:gravity="center_vertical" android:paddingStart="14dp" android:text="dumbNavigator" android:textColor="#EAF0FF" android:textSize="13sp" android:background="@drawable/address_glass" />
+            <Button android:id="@+id/newTab" android:layout_width="42dp" android:layout_height="38dp" android:layout_marginStart="6dp" android:text="+" android:textSize="21sp" android:textColor="#F2F6FF" android:backgroundTint="#263A52" android:contentDescription="Nueva pestaña" />
         </LinearLayout>
-
-        <FrameLayout
-            android:id="@+id/engine"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:background="#0A0E16" />
-
-        <LinearLayout
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="10dp"
-            android:padding="7dp"
-            android:gravity="center_vertical"
-            android:background="@drawable/toolbar_glass"
-            android:elevation="14dp">
-
-            <Button
-                android:id="@+id/back"
-                android:layout_width="40dp"
-                android:layout_height="44dp"
-                android:text="‹"
-                android:textSize="27sp"
-                android:textColor="#F2F6FF"
-                android:backgroundTint="#331B2638"
-                android:contentDescription="Atrás" />
-
-            <Button
-                android:id="@+id/forward"
-                android:layout_width="40dp"
-                android:layout_height="44dp"
-                android:layout_marginStart="2dp"
-                android:text="›"
-                android:textSize="27sp"
-                android:textColor="#F2F6FF"
-                android:backgroundTint="#331B2638"
-                android:contentDescription="Adelante" />
-
-            <EditText
-                android:id="@+id/address"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                android:layout_marginEnd="5dp"
-                android:singleLine="true"
-                android:hint="dumb:// dirección interna"
-                android:textColor="#F7F9FF"
-                android:textColorHint="#98A5BA"
-                android:background="@drawable/address_glass"
-                android:paddingStart="15dp"
-                android:paddingEnd="15dp"
-                android:inputType="textUri" />
-
-            <Button
-                android:id="@+id/home"
-                android:layout_width="42dp"
-                android:layout_height="44dp"
-                android:text="⌂"
-                android:textSize="19sp"
-                android:textColor="#F2F6FF"
-                android:backgroundTint="#331B2638"
-                android:contentDescription="Inicio" />
-
-            <Button
-                android:id="@+id/bookmark"
-                android:layout_width="42dp"
-                android:layout_height="44dp"
-                android:layout_marginStart="2dp"
-                android:text="☆"
-                android:textSize="20sp"
-                android:textColor="#F2F6FF"
-                android:backgroundTint="#331B2638"
-                android:contentDescription="Marcador" />
-
-            <Button
-                android:id="@+id/menu"
-                android:layout_width="42dp"
-                android:layout_height="44dp"
-                android:layout_marginStart="2dp"
-                android:text="⋮"
-                android:textSize="23sp"
-                android:textColor="#F2F6FF"
-                android:backgroundTint="#263A52"
-                android:contentDescription="Menú" />
+        <FrameLayout android:id="@+id/engine" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:background="#0A0E16" />
+        <LinearLayout android:id="@+id/toolbar" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_marginEnd="8dp" android:layout_marginBottom="10dp" android:padding="7dp" android:gravity="center_vertical" android:background="@drawable/toolbar_glass" android:elevation="14dp">
+            <Button android:id="@+id/back" android:layout_width="40dp" android:layout_height="44dp" android:text="‹" android:textSize="27sp" android:textColor="#F2F6FF" android:backgroundTint="#331B2638" android:contentDescription="Atrás" />
+            <Button android:id="@+id/forward" android:layout_width="40dp" android:layout_height="44dp" android:layout_marginStart="2dp" android:text="›" android:textSize="27sp" android:textColor="#F2F6FF" android:backgroundTint="#331B2638" android:contentDescription="Adelante" />
+            <EditText android:id="@+id/address" android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1" android:layout_marginStart="6dp" android:layout_marginEnd="4dp" android:singleLine="true" android:hint="dumb:// dirección interna" android:textColor="#F7F9FF" android:textColorHint="#98A5BA" android:background="@drawable/address_glass" android:paddingStart="15dp" android:paddingEnd="15dp" android:inputType="textUri" />
+            <Button android:id="@+id/go" android:layout_width="40dp" android:layout_height="44dp" android:text="↵" android:textSize="19sp" android:textColor="#F2F6FF" android:backgroundTint="#263A52" android:contentDescription="Ir" />
+            <Button android:id="@+id/home" android:layout_width="40dp" android:layout_height="44dp" android:layout_marginStart="2dp" android:text="⌂" android:textSize="19sp" android:textColor="#F2F6FF" android:backgroundTint="#331B2638" android:contentDescription="Inicio" />
+            <Button android:id="@+id/bookmark" android:layout_width="40dp" android:layout_height="44dp" android:layout_marginStart="2dp" android:text="☆" android:textSize="20sp" android:textColor="#F2F6FF" android:backgroundTint="#331B2638" android:contentDescription="Marcador" />
+            <Button android:id="@+id/menu" android:layout_width="40dp" android:layout_height="44dp" android:layout_marginStart="2dp" android:text="⋮" android:textSize="23sp" android:textColor="#F2F6FF" android:backgroundTint="#263A52" android:contentDescription="Menú" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>
