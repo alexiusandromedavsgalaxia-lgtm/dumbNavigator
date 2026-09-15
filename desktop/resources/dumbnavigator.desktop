@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=dumbNavigator
+Comment=Internal dumb:// browser
+Exec=dumbnavigator %U
+Icon=dumbnavigator
+Terminal=false
+Categories=Network;WebBrowser;Utility;
+MimeType=x-scheme-handler/dumb;
