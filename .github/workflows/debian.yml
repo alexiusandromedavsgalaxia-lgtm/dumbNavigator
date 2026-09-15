@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-debian:
@@ -94,6 +94,23 @@ jobs:
           test -s dist/dumbnavigator_1.0.1_amd64.deb
           dpkg-deb --info dist/dumbnavigator_1.0.1_amd64.deb
           dpkg-deb --contents dist/dumbnavigator_1.0.1_amd64.deb
+
+      - name: Publish Debian package to /apps
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor != 'github-actions[bot]'
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p apps
+          cp dist/dumbnavigator_1.0.1_amd64.deb apps/dumbnavigator_1.0.1_amd64.deb
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/dumbnavigator_1.0.1_amd64.deb
+          if git diff --cached --quiet; then
+            echo ".deb unchanged; nothing to commit."
+            exit 0
+          fi
+          git commit -m "build: update Debian package"
+          git push
 
       - name: Upload Debian package
         uses: actions/upload-artifact@v4
