@@ -24,6 +24,7 @@ public final class BrowserController implements DumbEngine.Host {
     private final DumbEngine engine;
     private final Handler main = new Handler(Looper.getMainLooper());
     private String title = "dumbNavigator";
+    private String currentUrl = HOME;
 
     public BrowserController(Context context, Listener listener) {
         this.context = context;
@@ -33,7 +34,7 @@ public final class BrowserController implements DumbEngine.Host {
     }
 
     public View view() { return engine.view(); }
-    public String currentUrl() { return engine.currentUrl(); }
+    public String currentUrl() { return currentUrl; }
     public boolean canGoBack() { return engine.canBack(); }
     public boolean canGoForward() { return engine.canForward(); }
     public BrowserStore store() { return store; }
@@ -43,7 +44,7 @@ public final class BrowserController implements DumbEngine.Host {
     public void home() { engine.go(HOME); }
     public void back() { engine.back(); notifyNavigation(); }
     public void forward() { engine.forward(); notifyNavigation(); }
-    public void reload() { engine.go(engine.currentUrl()); }
+    public void reload() { engine.go(currentUrl); }
 
     public void setTitle(String value) {
         title = value == null || value.trim().isEmpty() ? "dumbNavigator" : value.trim();
@@ -84,6 +85,7 @@ public final class BrowserController implements DumbEngine.Host {
     }
 
     @Override public void onUrl(String url) {
+        currentUrl = url;
         main.post(() -> {
             listener.onUrl(url);
             listener.onNavigationState(engine.canBack(), engine.canForward());
