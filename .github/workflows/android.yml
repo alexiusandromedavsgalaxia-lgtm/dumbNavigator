@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: android-ci-${{ github.workflow }}-${{ github.ref }}
@@ -61,6 +61,23 @@ jobs:
           rm -rf app/build
           gradle --no-daemon :app:assembleDebug --stacktrace
           test -s app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Publish APK to /apps
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor != 'github-actions[bot]'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p apps
+          cp app/build/outputs/apk/debug/app-debug.apk apps/dumbNavigator-debug.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/dumbNavigator-debug.apk
+          if git diff --cached --quiet; then
+            echo "APK unchanged; nothing to commit."
+            exit 0
+          fi
+          git commit -m "build: update Android APK"
+          git push
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
