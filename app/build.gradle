@@ -5,4 +5,4 @@ android { namespace 'dev.dumbnavigator'; compileSdk 36
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
 
-dependencies { implementation 'org.mozilla.geckoview:geckoview:150.0.20260901091500' }
+dependencies { implementation 'org.mozilla.geckoview:geckoview:155.0.20260903215306' }
