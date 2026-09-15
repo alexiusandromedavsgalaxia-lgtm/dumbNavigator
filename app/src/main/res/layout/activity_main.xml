@@ -28,7 +28,7 @@
             android:text="‹"
             android:textSize="28sp"
             android:textColor="#F2F6FF"
-            android:backgroundTint="#261FFFFFF"
+            android:backgroundTint="#331B2638"
             android:contentDescription="Atrás" />
 
         <Button
@@ -39,7 +39,7 @@
             android:text="›"
             android:textSize="28sp"
             android:textColor="#F2F6FF"
-            android:backgroundTint="#261FFFFFF"
+            android:backgroundTint="#331B2638"
             android:contentDescription="Adelante" />
 
         <EditText
