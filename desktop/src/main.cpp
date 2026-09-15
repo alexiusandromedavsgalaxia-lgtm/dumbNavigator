@@ -6,7 +6,7 @@
 #include <vector>
 
 namespace {
-const char* HOME_URL = "dumb://uuu.une.developeit.dev/";
+const char* HOME_URL = "about:blank";
 
 struct Browser {
     GtkWidget* window{};
