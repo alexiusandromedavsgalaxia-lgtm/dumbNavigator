@@ -1,12 +1,13 @@
 #include <gtk/gtk.h>
 #include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
 
 namespace {
-const char* HOME_URL = "about:blank";
+const char* HOME_URL = "dumb://une.developeit.dev/";
 
 struct Browser {
     GtkWidget* window{};
