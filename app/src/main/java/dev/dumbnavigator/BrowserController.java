@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.widget.Toast;
+import java.io.IOException;
 import java.util.List;
 
 /** Coordinates navigation state, the native DumbEngine and browser chrome. */
@@ -59,6 +60,17 @@ public final class BrowserController implements DumbEngine.Host {
     public List<BrowserStore.Bookmark> bookmarks() { return store.bookmarks(); }
     public List<String> history() { return store.history(); }
     public void clearHistory() { store.clearHistory(); }
+
+    public void publish(String domain, String html, boolean wildcard) throws IOException {
+        String host = DumbDomains.publicInternalHost(domain);
+        if (host.isEmpty()) throw new IOException("dominio no válido");
+        if (DumbDomains.isReserved(host)) throw new IOException("ese dominio está reservado");
+        String page = html == null || html.trim().isEmpty()
+                ? "<!doctype html><html><body><h1>" + host + "</h1><p>mi web dumb</p></body></html>"
+                : html;
+        DumbEngine.Loader.save(context.getApplicationContext(), host, page, wildcard);
+        open("dumb://" + host + "/");
+    }
 
     private void notifyNavigation() {
         main.post(() -> listener.onNavigationState(engine.canBack(), engine.canForward()));
