@@ -7,8 +7,12 @@ android {
         applicationId 'dev.dumbnavigator'
         minSdk 26
         targetSdk 36
-        versionCode 4
-        versionName '0.4.0-internal-chromium'
+        versionCode 10
+        versionName '1.0.0-internal-browser'
+    }
+    buildTypes {
+        debug { minifyEnabled false; debuggable true }
+        release { minifyEnabled true; shrinkResources true; debuggable false; proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro' }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
