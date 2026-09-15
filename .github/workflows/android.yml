@@ -49,7 +49,12 @@ jobs:
           gradle-version: '8.13'
 
       - name: Build APK
-        run: gradle --no-daemon :app:assembleDebug --stacktrace
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf app/build
+          gradle --no-daemon :app:assembleDebug --stacktrace
+          test -f app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
