@@ -5,7 +5,7 @@ import './styles.css'
 const HOME='dumb://une.developeit.dev/'
 const RESERVED=['google.com','apple.com','microsoft.com','amazon.com','youtube.com','instagram.com','facebook.com','tiktok.com','spotify.com','github.com','cloudflare.com','openai.com','wikipedia.org','reddit.com','discord.com','whatsapp.com','roblox.com','minecraft.net','nintendo.com','playstation.com','xbox.com','netflix.com']
 const PAGES={
-  home:'<main class="home"><span class="badge">◆ dumbNavigator</span><h1>tu web.<br/>tu universo.</h1><p>Un navegador con su propio espacio web interno.</p><div class="grid"><section class="card"><h2>crear una web</h2><p>Diseña y publica HTML localmente.</p><button data-action="creator">Crear mi web →</button></section><section class="card"><h2>offline-first</h2><p>Tus webs y preferencias se guardan en este navegador.</p></section></div></main>',
+  home:'<main class="home"><span class="badge">◆ dumbNavigator</span><h1>tu web.<br/>tu universo.</h1><p>Un navegador con su propio espacio web interno.</p><div class="grid"><section class="card"><h2>crear una web</h2><p>Diseña y publica HTML localmente.</p><button data-nav="dumb://une.developeit.dev/new">Crear mi web →</button></section><section class="card"><h2>offline-first</h2><p>Tus webs y preferencias se guardan en este navegador.</p></section></div></main>',
   about:'<main class="home"><span class="badge">dumbNavigator · React + Vite</span><h1>tu navegador dentro de dumb://</h1><p>Versión web del proyecto, reconstruida como aplicación React con Vite.</p><div class="grid"><section class="card"><h2>navegación</h2><p>Pestañas, historial, marcadores y páginas internas.</p></section><section class="card"><h2>creador</h2><p>Editor HTML con vista previa aislada.</p></section></div></main>',
   help:'<main class="home"><h1>ayuda</h1><p>Escribe <code>miweb.com</code> para crear una dirección dumb://uuu.miweb.com.</p><div class="grid"><section class="card"><h2>atajos</h2><p>← atrás · → adelante · ⌂ inicio · ↻ recargar · ☆ marcador · ☰ menú.</p></section></div></main>',
   docs:'<main class="home"><h1>dumb://</h1><p>Las direcciones internas usan los prefijos <code>uuu</code> y <code>jit</code>.</p></main>',
@@ -57,11 +57,11 @@ function App(){
  const [address,setAddress]=useState(HOME)
  const current=tabs[active]
  useEffect(()=>setAddress(current.url),[current.url])
- const navigate=url=>{const u=normalize(url);setTabs(ts=>ts.map((t,i)=>i===active?{...t,url:u,history:[...t.history.slice(0,t.index+1),...(t.url===u?[]:[u])],index:t.url===u?t.index:t.index+1}:t));setAddress(u);setView('browser');setMenu(false);const h=read('dumbHistory',[]).filter(x=>x!==u);h.push(u);write('dumbHistory',h.slice(-100))}
+ const navigate=url=>{const u=normalize(url);const path=(()=>{try{return new URL(u).pathname.replace(/^\\//,'').toLowerCase()}catch{return ''}})();if(path==='new'){setView('creator')}else if(path==='studio'){setView('studio')}else if(path==='notes'){setView('notes')}else if(path==='calculator'){setView('calc')}else{setView('browser')}setTabs(ts=>ts.map((t,i)=>i===active?{...t,url:u,history:[...t.history.slice(0,t.index+1),...(t.url===u?[]:[u])],index:t.url===u?t.index:t.index+1}:t));setAddress(u);setMenu(false);const h=read('dumbHistory',[]).filter(x=>x!==u);h.push(u);write('dumbHistory',h.slice(-100))}
  const back=()=>setTabs(ts=>ts.map((t,i)=>i===active&&t.index>0?{...t,index:t.index-1,url:t.history[t.index-1]}:t))
  const forward=()=>setTabs(ts=>ts.map((t,i)=>i===active&&t.index<t.history.length-1?{...t,index:t.index+1,url:t.history[t.index+1]}:t))
  const newTab=()=>{setTabs(ts=>[...ts,{url:HOME,title:'Nueva pestaña',history:[HOME],index:0}]);setActive(tabs.length);setView('browser')}
- const close=i=>{if(tabs.length===1)return;setTabs(ts=>ts.filter((_,n)=>n!==i));setActive(a=>Math.min(a,tabs.length-2))}
+ const close=i=>{if(tabs.length===1)return;setTabs(ts=>ts.filter((_,n)=>n!==i));setActive(a=>i<a?a-1:Math.min(a,tabs.length-2))}
  const bookmark=()=>{const a=read('dumbBookmarks',[]),i=a.findIndex(x=>x.url===current.url);if(i>=0)a.splice(i,1);else a.push({url:current.url,title:current.title});write('dumbBookmarks',a);setMenu(false)}
  const bookmarked=read('dumbBookmarks',[]).some(x=>x.url===current.url)
  const content=useMemo(()=>{if(view==='creator')return <Creator navigate={navigate}/>;if(view==='studio')return <Studio/>;if(view==='notes')return <Notes/>;if(view==='calc')return <Calculator/>;return <Browser url={current.url} navigate={navigate}/>},[view,current.url])
