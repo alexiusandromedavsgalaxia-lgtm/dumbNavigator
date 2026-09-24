@@ -6,8 +6,10 @@ const DEFAULT_HOME='dumb://home'
 const SETTINGS='dumb://settings'
 const RESERVED=['google.com','apple.com','microsoft.com','amazon.com','youtube.com','instagram.com','facebook.com','tiktok.com','spotify.com','github.com','cloudflare.com','openai.com','wikipedia.org','reddit.com','discord.com','whatsapp.com','roblox.com','minecraft.net','nintendo.com','playstation.com','xbox.com','netflix.com']
 
-const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)??'null')??d}catch{return d}}
-const write=(k,v)=>localStorage.setItem(k,JSON.stringify(v))
+const read=(k,d)=>{try{return JSON.parse(window.localStorage.getItem(k)??'null')??d}catch{return d}}
+const write=(k,v)=>{try{window.localStorage.setItem(k,JSON.stringify(v));return true}catch{return false}}
+const clearStorageKey=k=>{try{window.localStorage.removeItem(k)}catch{}}
+
 const host=url=>{try{return new URL(url).hostname.toLowerCase()}catch{return ''}}
 const normalize=input=>{
   let s=input.trim()
@@ -114,14 +116,24 @@ function BrowserPage({url,navigate,reloadToken}){
   return <iframe className="page" srcDoc={html} title={url} sandbox="allow-scripts allow-forms" onLoad={e=>{try{e.currentTarget.contentDocument?.addEventListener('click',ev=>{const n=ev.target.closest('[data-nav]');if(n){ev.preventDefault();navigate(n.dataset.nav)}})}catch{}}}/>
 }
 
+class AppErrorBoundary extends React.Component{
+  constructor(props){super(props);this.state={error:null}}
+  static getDerivedStateFromError(error){return {error}}
+  render(){
+    if(this.state.error)return <div className="fatalError"><span className="eyebrow">DUMBNAVIGATOR</span><h1>No se pudo iniciar.</h1><p>La aplicación encontró un error al cargar esta versión.</p><pre>{String(this.state.error?.message||this.state.error)}</pre><button className="primary" onClick={()=>{clearStorageKey('dumbSetup');clearStorageKey('dumbSites');clearStorageKey('dumbBookmarks');clearStorageKey('dumbHistory');window.location.reload()}}>Restablecer configuración</button></div>
+    return this.props.children
+  }
+}
+
 function App(){
   const [config,setConfig]=useState(()=>read('dumbSetup',null))
   const [tabs,setTabs]=useState(()=>[{url:DEFAULT_HOME,title:'Neue Tab',history:[DEFAULT_HOME],index:0}])
   const [active,setActive]=useState(0),[menu,setMenu]=useState(false),[address,setAddress]=useState(DEFAULT_HOME),[reloadToken,setReloadToken]=useState(0)
-  const current=tabs[active]
+  const current=tabs[active]||tabs[0]
   const navigate=url=>{const u=normalize(url);setTabs(ts=>ts.map((t,i)=>i===active?{...t,url:u,title:titleFor(u),history:[...t.history.slice(0,t.index+1),...(t.url===u?[]:[u])],index:t.url===u?t.index:t.index+1}:t));setAddress(u);setMenu(false);const h=read('dumbHistory',[]).filter(x=>x!==u);h.push(u);write('dumbHistory',h.slice(-200))}
   const back=()=>setTabs(ts=>ts.map((t,i)=>i===active&&t.index>0?{...t,index:t.index-1,url:t.history[t.index-1],title:titleFor(t.history[t.index-1])}:t))
   const forward=()=>setTabs(ts=>ts.map((t,i)=>i===active&&t.index<t.history.length-1?{...t,index:t.index+1,url:t.history[t.index+1],title:titleFor(t.history[t.index+1])}:t))
+  useEffect(()=>{setAddress(current?.url||DEFAULT_HOME)},[current?.url])
   const newTab=()=>{setTabs(ts=>[...ts,{url:DEFAULT_HOME,title:'Neue Tab',history:[DEFAULT_HOME],index:0}]);setActive(tabs.length)}
   const close=i=>{if(tabs.length===1)return;setTabs(ts=>ts.filter((_,n)=>n!==i));setActive(a=>i<a?a-1:Math.min(a,tabs.length-2))}
   const bookmarks=read('dumbBookmarks',[]),bookmarked=bookmarks.some(x=>x.url===current.url)
@@ -133,4 +145,5 @@ function App(){
   </div>
 }
 
-createRoot(document.getElementById('root')).render(config?<App/>:<Setup onDone={setConfig}/>)
+const root=document.getElementById('root')
+if(root)createRoot(root).render(<AppErrorBoundary>{config?<App/>:<Setup onDone={setConfig}/>}</AppErrorBoundary>)
