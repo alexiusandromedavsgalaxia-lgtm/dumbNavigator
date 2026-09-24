@@ -21,6 +21,7 @@ const normalize=input=>{
 }
 const titleFor=url=>url===DEFAULT_HOME?'Neue Tab':url===SETTINGS?'Einstellungen':host(url)||'Neue Tab'
 const rewrite=html=>html.replace(/href\s*=\s*["'](dumb:\/\/[^"']+)["']/gi,(_,u)=>'href="#" data-nav="'+u.replaceAll('"','&quot;')+'"')
+const reactDocument=code=>'<!doctype html><html><head><meta charset="UTF-8"><script src="https://unpkg.com/react@18/umd/react.development.js"></script><script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script></head><body><div id="root"></div><script type="text/babel">'+code+'</script></body></html>'
 
 const themes={
   dark:{bg:'#08090d',surface:'#15171d',text:'#f5f7fb',accent:'#8ab4ff'},
@@ -132,7 +133,7 @@ function Creator({navigate}){
 function BrowserPage({url,navigate,reloadToken}){
   const [html,setHtml]=useState('')
   const [external,setExternal]=useState(false)
-  useEffect(()=>{const h=host(url);let value=null;if(h&&read('dumbSites',{})[h])value=read('dumbSites',{})[h].html;if(value){setExternal(false);setHtml(rewrite(value))}else if(/^https?:\/\//.test(url)){setExternal(true)}else{setExternal(false);setHtml('<main class="notFound"><span>404</span><h1>Página no encontrada</h1><p>Esta dirección todavía no existe en dumbNavigator.</p><button data-nav="dumb://home">Volver al inicio</button></main>')}},[url,reloadToken])
+  useEffect(()=>{const h=host(url);const site=h?read('dumbSites',{})[h]:null;if(site){setExternal(false);setHtml(site.mode==='react'?reactDocument(site.html):rewrite(site.html))}else if(/^https?:\/\//.test(url)){setExternal(true)}else{setExternal(false);setHtml('<main class="notFound"><span>404</span><h1>Página no encontrada</h1><p>Esta dirección todavía no existe en dumbNavigator.</p><button data-nav="dumb://home">Volver al inicio</button></main>')}},[url,reloadToken])
   if(external)return <iframe className="page" src={url} title={url} referrerPolicy="no-referrer"/>
   return <iframe className="page" srcDoc={html} title={url} sandbox="allow-scripts allow-forms" onLoad={e=>{try{e.currentTarget.contentDocument?.addEventListener('click',ev=>{const n=ev.target.closest('[data-nav]');if(n){ev.preventDefault();navigate(n.dataset.nav)}})}catch{}}}/>
 }
