@@ -156,8 +156,8 @@ function BrowserPage({url,navigate,reloadToken,config}){
     const h=domainFromUrl(url)
     const site=h?read('dumbSites',{})[h]:null
     if(site)setHtml(rewrite(site.html))
-    else setHtml('<main class="notFound"><span>404</span><h1>{tr(language,'notFound')}</h1><p>{tr(language,'notFoundDesc')}</p><button data-nav="dumb://home">{tr(language,'backHome')}</button></main>')
-  },[url,reloadToken])
+    else setHtml(`<main class="notFound"><span>404</span><h1>${tr(language,'notFound')}</h1><p>${tr(language,'notFoundDesc')}</p><button data-nav="dumb://home">${tr(language,'backHome')}</button></main>`)
+  },[url,reloadToken,language])
   return <iframe className="page" srcDoc={html} title={url} sandbox="allow-scripts allow-forms" onLoad={e=>{try{e.currentTarget.contentDocument?.addEventListener('click',ev=>{const n=ev.target.closest('[data-nav]');if(n){ev.preventDefault();navigate(n.dataset.nav)}})}catch{}}}/>
 }
 
