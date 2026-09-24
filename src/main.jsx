@@ -57,7 +57,7 @@ function App(){
  const [address,setAddress]=useState(HOME)
  const current=tabs[active]
  useEffect(()=>setAddress(current.url),[current.url])
- const navigate=url=>{const u=normalize(url);const path=(()=>{try{return new URL(u).pathname.replace(/^\\//,'').toLowerCase()}catch{return ''}})();if(path==='new'){setView('creator')}else if(path==='studio'){setView('studio')}else if(path==='notes'){setView('notes')}else if(path==='calculator'){setView('calc')}else{setView('browser')}setTabs(ts=>ts.map((t,i)=>i===active?{...t,url:u,history:[...t.history.slice(0,t.index+1),...(t.url===u?[]:[u])],index:t.url===u?t.index:t.index+1}:t));setAddress(u);setMenu(false);const h=read('dumbHistory',[]).filter(x=>x!==u);h.push(u);write('dumbHistory',h.slice(-100))}
+ const navigate=url=>{const u=normalize(url);const path=(()=>{try{return new URL(u).pathname.replace(/^\/+/,'').toLowerCase()}catch{return ''}})();if(path==='new'){setView('creator')}else if(path==='studio'){setView('studio')}else if(path==='notes'){setView('notes')}else if(path==='calculator'){setView('calc')}else{setView('browser')}setTabs(ts=>ts.map((t,i)=>i===active?{...t,url:u,history:[...t.history.slice(0,t.index+1),...(t.url===u?[]:[u])],index:t.url===u?t.index:t.index+1}:t));setAddress(u);setMenu(false);const h=read('dumbHistory',[]).filter(x=>x!==u);h.push(u);write('dumbHistory',h.slice(-100))}
  const back=()=>setTabs(ts=>ts.map((t,i)=>i===active&&t.index>0?{...t,index:t.index-1,url:t.history[t.index-1]}:t))
  const forward=()=>setTabs(ts=>ts.map((t,i)=>i===active&&t.index<t.history.length-1?{...t,index:t.index+1,url:t.history[t.index+1]}:t))
  const newTab=()=>{setTabs(ts=>[...ts,{url:HOME,title:'Nueva pestaña',history:[HOME],index:0}]);setActive(tabs.length);setView('browser')}
