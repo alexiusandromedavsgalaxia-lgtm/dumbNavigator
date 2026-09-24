@@ -103,9 +103,10 @@ const Home=({navigate,openSettings,config})=>{\n  const language=config?.languag
 }
 
 function SettingsPage({config,setConfig,onClose}){
-  const t=key=>tr(draft.language,key)
   const [draft,setDraft]=useState({...config,density:config.density||'comfortable',radius:config.radius||'soft'})
-  const language=draft.language||'es'\n  const t=key=>tr(language,key)\n  const save=()=>{write('dumbSetup',draft);setConfig(draft)}
+  const language=draft.language||'es'
+  const t=key=>tr(language,key)
+  const save=()=>{write('dumbSetup',draft);setConfig(draft)}
   return <div className="settingsPage"><div className="settingsTop"><div><span className="eyebrow">{t('settings').toUpperCase()}</span><h1>{t('settings')}</h1></div><button className="settingsClose" onClick={onClose}>×</button></div>
     <div className="settingsSections">
       <section><h2>{t('appearance')}</h2><p>{t('customize')}</p>
