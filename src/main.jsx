@@ -119,7 +119,8 @@ function Creator({navigate}){
   const [code,setCode]=useState('<!doctype html>\\n<html>\\n<head><title>Mi web</title></head>\\n<body style="font-family:system-ui;padding:40px">\\n  <h1>Hola 👋</h1>\\n  <p>Mi primera web en dumbNavigator.</p>\\n</body>\\n</html>')
   const [backend,setBackend]=useState(false)
   const [backendCode,setBackendCode]=useState('export async function onRequest(context) {\\n  return new Response(JSON.stringify({ ok: true } ), {\\n    headers: { "content-type": "application/json" }\\n  })\\n}')
-  const preview=mode==='react'?reactDocument():rewrite(code)\n  const publish=()=>{
+  const preview=mode==='react'?reactDocument():rewrite(code)
+  const publish=()=>{
     let h=domain.trim().toLowerCase().replace(/[^a-z0-9.-]/g,'')
     if(!h||RESERVED.includes(h)){alert('Elige otro nombre de web.');return}
     if(!h.includes('.'))h=h+'.dev'
