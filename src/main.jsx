@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client'
 import './styles.css'
 
 const DEFAULT_HOME='dumb://home'
-const SETTINGS='dumb://settings'\nconst CREATE='dumb://create'
+const CREATE='dumb://create'
 const RESERVED=['google.com','apple.com','microsoft.com','amazon.com','youtube.com','instagram.com','facebook.com','tiktok.com','spotify.com','github.com','cloudflare.com','openai.com','wikipedia.org','reddit.com','discord.com','whatsapp.com','roblox.com','minecraft.net','nintendo.com','playstation.com','xbox.com','netflix.com']
 
 const read=(k,d)=>{try{return JSON.parse(window.localStorage.getItem(k)??'null')??d}catch{return d}}
@@ -14,12 +14,12 @@ const host=url=>{try{return new URL(url).hostname.toLowerCase()}catch{return ''}
 const normalize=input=>{
   let s=input.trim()
   if(!s)return DEFAULT_HOME
-    if(/^www\\.[^\\s]+$/i.test(s))s='https://'+s
+    if(/^www\.[^\s]+$/i.test(s))s='https://'+s
   else if(/^(?:https?:\\/\\/)?(?:[a-z0-9-]+\\.)+[a-z]{2,}(?:[/:?#].*)?$/i.test(s))s=s.startsWith('http')?s:'https://'+s
   else if(!s.includes('://'))return 'https://www.google.com/search?q='+encodeURIComponent(s)
   try{return s.startsWith('dumb://')?(()=>{const u=new URL(s);return 'dumb://'+u.hostname.toLowerCase()+(u.pathname||'/')})():s}catch{return DEFAULT_HOME}
 }
-const titleFor=url=>url===DEFAULT_HOME?'Neue Tab':url===SETTINGS?'Einstellungen':host(url)||'Neue Tab'
+const titleFor=url=>url===DEFAULT_HOME?'Neue Tab':host(url)||'Nueva página'
 const rewrite=html=>html.replace(/href\s*=\s*["'](dumb:\/\/[^"']+)["']/gi,(_,u)=>'href="#" data-nav="'+u.replaceAll('"','&quot;')+'"')
 const reactDocument=code=>'<!doctype html><html><head><meta charset="UTF-8"><script src="https://unpkg.com/react@18/umd/react.development.js"></script><script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script></head><body><div id="root"></div><script type="text/babel">'+code+'</script></body></html>'
 
