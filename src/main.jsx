@@ -73,7 +73,8 @@ function Setup({onDone}){
   </div>
 }
 
-const Home=({navigate,openSettings,config})=>{\n  const language=config?.language||'es'
+const Home=({navigate,openSettings,config})=>{
+  const language=config?.language||'es'
   const sites=Object.entries(read('dumbSites',{}))
   const bookmarks=read('dumbBookmarks',[])
   return <div className="startPage">
