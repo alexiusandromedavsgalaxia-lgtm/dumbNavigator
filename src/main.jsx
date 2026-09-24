@@ -102,12 +102,33 @@ function SettingsPage({config,setConfig,onClose}){
 }
 
 function Creator({navigate}){
+  const [mode,setMode]=useState('html')
   const [domain,setDomain]=useState('miweb')
-  const [code,setCode]=useState('<!doctype html>\n<html>\n<head><title>Mi web</title></head>\n<body style="font-family:system-ui;padding:40px">\n  <h1>Hola 👋</h1>\n  <p>Mi primera web en dumbNavigator.</p>\n</body>\n</html>')
-  const publish=()=>{let h=domain.trim().toLowerCase().replace(/^https?:\/\//,'').replace(/[^a-z0-9.-]/g,'');if(!h||RESERVED.some(x=>h===x||h.endsWith('.'+x))){alert('Elige otro nombre de web.');return}if(!h.includes('.'))h='uuu.'+h+'.dev';const sites=read('dumbSites',{});sites[h]={html:code};write('dumbSites',sites);navigate('dumb://'+h)}
-  return <div className="creatorPro"><div className="creatorTop"><div><span className="eyebrow">DUMBNAVIGATOR CREATOR</span><h1>Crea tu web.</h1></div><button onClick={()=>navigate(DEFAULT_HOME)}>×</button></div><div className="creatorLayout"><section className="codePanel"><div className="panelHead"><b>HTML</b><span>editable</span></div><textarea value={code} onChange={e=>setCode(e.target.value)} spellCheck="false"/></section><section className="livePanel"><div className="panelHead"><b>Vista previa</b><span>LIVE</span></div><iframe className="preview" srcDoc={rewrite(code)} title="Vista previa" sandbox="allow-scripts allow-forms"/></section></div><div className="publishBar"><input value={domain} onChange={e=>setDomain(e.target.value)} placeholder="nombre-de-tu-web"/><span>.dev</span><button className="primary" onClick={publish}>Publicar →</button></div></div>
+  const [code,setCode]=useState('<!doctype html>\\n<html>\\n<head><title>Mi web</title></head>\\n<body style="font-family:system-ui;padding:40px">\\n  <h1>Hola 👋</h1>\\n  <p>Mi primera web en dumbNavigator.</p>\\n</body>\\n</html>')
+  const [backend,setBackend]=useState(false)
+  const [backendCode,setBackendCode]=useState('export async function onRequest(context) {\\n  return new Response(JSON.stringify({ ok: true } ), {\\n    headers: { "content-type": "application/json" }\\n  })\\n}')
+  const reactPreview=\`<!doctype html><html><head><meta charset="UTF-8"><script src="https://unpkg.com/react@18/umd/react.development.js"></script><script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script></head><body><div id="root"></div><script type="text/babel">${code}</script></body></html>\`
+  const preview=mode==='react'?reactPreview:rewrite(code)
+  const publish=()=>{
+    let h=domain.trim().toLowerCase().replace(/^https?:\\/\\/,'').replace(/[^a-z0-9.-]/g,'')
+    if(!h||RESERVED.some(x=>h===x||h.endsWith('.'+x))){alert('Elige otro nombre de web.');return}
+    if(!h.includes('.'))h='uuu.'+h+'.dev'
+    const sites=read('dumbSites',{})
+    sites[h]={mode,html:code,backend:backend?backendCode:null}
+    write('dumbSites',sites)
+    navigate('dumb://'+h)
+  }
+  return <div className="creatorPro">
+    <div className="creatorTop"><div><span className="eyebrow">DUMBNAVIGATOR CREATOR</span><h1>Crea una web avanzada.</h1><p>HTML o React, con espacio para backend.</p></div><button onClick={()=>navigate(DEFAULT_HOME)}>×</button></div>
+    <div className="creatorModes"><button className={mode==='html'?'active':''} onClick={()=>setMode('html')}>HTML</button><button className={mode==='react'?'active':''} onClick={()=>setMode('react')}>React</button><button className={backend?'active':''} onClick={()=>setBackend(!backend)}>＋ Backend</button></div>
+    <div className="creatorLayout">
+      <section className="codePanel"><div className="panelHead"><b>{mode==='react'?'React / JSX':'HTML'}</b><span>editable</span></div><textarea value={code} onChange={e=>setCode(e.target.value)} spellCheck="false"/></section>
+      <section className="livePanel"><div className="panelHead"><b>Vista previa</b><span>LIVE</span></div><iframe className="preview" srcDoc={preview} title="Vista previa" sandbox="allow-scripts allow-forms"/></section>
+    </div>
+    {backend&&<section className="backendPanel"><div className="panelHead"><b>Backend</b><span>Cloudflare Pages Function</span></div><textarea value={backendCode} onChange={e=>setBackendCode(e.target.value)} spellCheck="false"/><p>El código queda asociado al proyecto para desplegarlo como función del backend cuando la web se publique en Cloudflare.</p></section>}
+    <div className="publishBar"><input value={domain} onChange={e=>setDomain(e.target.value)} placeholder="nombre-de-tu-web"/><span>.dev</span><button className="primary" onClick={publish}>Publicar →</button></div>
+  </div>
 }
-
 function BrowserPage({url,navigate,reloadToken}){
   const [html,setHtml]=useState('')
   const [external,setExternal]=useState(false)
