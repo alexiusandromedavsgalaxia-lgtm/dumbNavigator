@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "react": "19.1.1",
-    "react-dom": "19.1.1"
+    "react-dom": "19.1.1",
+    "@webcontainer/api": "1.6.4"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "6.1.1",
