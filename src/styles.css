@@ -18,3 +18,209 @@ button,input,textarea,select{font:inherit}button{cursor:pointer;color:inherit}
 .notFound,.listPage{min-height:100%;padding:75px max(25px,8vw);background:#f6f7f9;color:#171a21}.notFound span{font-size:11px;letter-spacing:.15em;color:#69717e;font-weight:800}.notFound h1,.listPage h1{font-size:54px;letter-spacing:-.06em}.notFound button{padding:10px 14px;border:0;border-radius:8px;background:#171a21;color:#fff}
 .setup{height:100%;min-height:100%;display:grid;place-items:center;padding:24px;background:#0b0d11}.setupGlow{display:none}.setupCard{position:relative;width:min(820px,100%);padding:44px;border:1px solid #292e38;border-radius:12px;background:#11141a;box-shadow:0 30px 80px #0008}.setupLogo{width:44px;height:44px;border-radius:9px;margin-bottom:24px;background:#fff;color:#111}.setup h1{font-size:clamp(40px,6vw,62px);line-height:.95;letter-spacing:-.06em;margin:8px 0 12px}.setupIntro{max-width:560px;color:#9299a6;line-height:1.55}.setupGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:26px 0}.setupGrid label{display:flex;flex-direction:column;gap:7px;color:#b9c0ca;font-size:11px;font-weight:750}.setupGrid select{padding:10px;border:1px solid #303641;border-radius:7px;background:#0b0e13;color:#eef1f6}.setupPreview{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #292e38;border-radius:8px;background:#171a21;color:#e5e8ed}.setupPreview span{display:block;color:#858d99;font-size:10px;margin-top:3px}.previewDot{width:9px;height:9px;border-radius:50%}.primary.big{width:100%;margin-top:13px;padding:13px}.primary.big span{float:right}.density-compact .toolbar{padding:6px 9px}.density-compact .tab{height:37px}.density-spacious .toolbar{padding:12px 14px}.density-spacious .tab{height:43px}
 @media(max-width:760px){.app{grid-template-rows:43px 92px 1fr}.toolbar{grid-template-columns:1fr auto;grid-template-rows:35px 39px}.toolbar>.actions:first-child{grid-column:1/3}.address{grid-column:1/3;grid-row:2}.quickGrid,.siteList,.setupGrid,.creatorLayout,.settingsSections{grid-template-columns:1fr}.featureCard{min-height:118px}.hero h1{font-size:55px}.creatorLayout{height:calc(100vh - 242px)}.livePanel{display:none}.setupCard{padding:29px 22px}.startPage{padding:22px 18px}.panel{right:7px;width:calc(100% - 14px)}.settingsSections section:first-child{grid-column:auto}}
+
+
+/* Safari × Opera GX browser chrome */
+.app{
+  grid-template-rows:52px 62px 1fr;
+  background:#090a0d;
+}
+.tabs{
+  align-items:center;
+  gap:5px;
+  padding:6px 10px 5px;
+  background:#101114;
+  border-bottom:1px solid #24262c;
+}
+.tab{
+  height:40px;
+  min-width:190px;
+  max-width:290px;
+  border:1px solid transparent;
+  border-radius:11px;
+  background:#17181c;
+  color:#8e929b;
+  box-shadow:inset 0 1px 0 #ffffff08;
+}
+.tab:hover{background:#1d1e23}
+.tab.active{
+  background:#25262b;
+  border-color:#363840;
+  color:#f7f7f8;
+  box-shadow:0 2px 10px #0005,inset 0 1px 0 #ffffff0d;
+}
+.tab span{font-size:12px;font-weight:650}
+.newtab{
+  margin:0;
+  width:38px;
+  height:38px;
+  border-radius:10px;
+}
+.toolbar{
+  grid-template-columns:auto minmax(220px,1fr) auto;
+  gap:12px;
+  padding:10px 13px;
+  background:#141519;
+  border-bottom:1px solid #292b31;
+}
+.actions{gap:3px}
+.icon{
+  width:35px;
+  height:35px;
+  border-radius:9px;
+  color:#a2a6ae;
+}
+.icon:hover:not(:disabled){
+  background:#27292f;
+  color:#fff;
+}
+.address{
+  height:40px;
+  padding:0 14px;
+  border:1px solid #383a42;
+  border-radius:20px;
+  background:#202126;
+  box-shadow:inset 0 1px 0 #ffffff09;
+}
+.address:hover{border-color:#4a4d56}
+.address:focus-within{
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 13%,transparent),inset 0 1px 0 #ffffff09;
+}
+.address span{font-size:16px}
+.address input{font-size:13px}
+
+.panel{
+  top:12px;
+  right:13px;
+  width:292px;
+  padding:7px;
+  border-radius:13px;
+  background:#17181d;
+  border-color:#353740;
+  box-shadow:0 20px 55px #000b,0 0 0 1px #ffffff04;
+}
+.panel h2{padding:3px 7px 5px}
+.panel button{
+  padding:10px 11px;
+  border-radius:8px;
+}
+.panel button:hover{background:#292b31}
+
+.main{
+  background:#f3f4f6;
+}
+.startPage{
+  background:
+    radial-gradient(circle at 82% 15%,color-mix(in srgb,var(--accent) 9%,transparent),transparent 28%),
+    linear-gradient(145deg,#fafbfc,#eef0f3);
+}
+.startHeader{
+  max-width:1120px;
+}
+.brandMark{
+  border-radius:10px;
+  background:#17181c;
+  box-shadow:0 0 0 1px #34363d;
+}
+.settingsBtn{
+  border-radius:10px;
+}
+.hero,.quickGrid,.section,.startFooter{max-width:1120px}
+.homeSearch{
+  border-radius:18px;
+  box-shadow:0 7px 22px #17181c0c;
+}
+.homeSearch button{
+  border-radius:13px;
+}
+.featureCard{
+  border-radius:13px;
+  box-shadow:0 5px 18px #17181c0a;
+}
+.featureCard:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 28px #17181c12;
+}
+.featureCard.accent{
+  background:#17181c;
+  border-color:#17181c;
+}
+.siteList button{
+  border-radius:11px;
+}
+.startFooter{
+  border-top:1px solid #d9dce1;
+  padding-top:15px;
+}
+
+/* GX-style dark surfaces in tools and creator, without blur */
+.creatorPro,.settingsOverlay,.settingsPage,.setup{
+  background:
+    radial-gradient(circle at 95% 0%,color-mix(in srgb,var(--accent) 7%,transparent),transparent 22%),
+    #0b0c10;
+}
+.creatorTop h1,.settingsTop h1{
+  letter-spacing:-.055em;
+}
+.creatorModes button{
+  border-radius:9px;
+}
+.creatorModes button.active{
+  background:#292b31;
+  border-color:#4a4d57;
+}
+.codePanel,.livePanel,.backendPanel,.settingsSections section{
+  border-radius:11px;
+  background:#121318;
+  border-color:#2b2d35;
+}
+.panelHead{
+  background:#17181d;
+}
+.publishBar{
+  border-radius:13px;
+  background:#141519;
+}
+.publishBar .primary,.primary{
+  border-radius:9px;
+}
+.protocolBadge{
+  color:var(--accent);
+}
+
+/* A restrained GX red only for destructive/active browser affordances */
+.tab.active::after{
+  content:"";
+  width:18px;
+  height:2px;
+  border-radius:2px;
+  background:#ff4b5f;
+  position:absolute;
+  bottom:0;
+  left:50%;
+  transform:translateX(-50%);
+  opacity:.75;
+}
+.tab{position:relative}
+
+/* Safari-like mobile chrome */
+@media(max-width:760px){
+  .app{grid-template-rows:47px 94px 1fr}
+  .tabs{
+    padding:5px 7px;
+    gap:4px;
+  }
+  .tab{
+    min-width:150px;
+    height:37px;
+    border-radius:10px;
+  }
+  .toolbar{
+    padding:8px 9px;
+    gap:7px;
+  }
+  .address{
+    border-radius:18px;
+  }
+}
