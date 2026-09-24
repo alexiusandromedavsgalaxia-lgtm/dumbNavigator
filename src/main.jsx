@@ -33,10 +33,12 @@ function Setup({onDone}){
   const [language,setLanguage]=useState('es')
   const [style,setStyle]=useState('glass')
   const [color,setColor]=useState('#8ab4ff')
-  const [background,setBackground]=useState('gradient')
+  const [background,setBackground]=useState('aurora')
+  const [density,setDensity]=useState('comfortable')
+  const [radius,setRadius]=useState('soft')
   const finish=()=>{
-    write('dumbSetup',{language,style,color,background})
-    onDone({language,style,color,background})
+    write('dumbSetup',{language,style,color,background,density,radius})
+    onDone({language,style,color,background,density,radius})
   }
   return <div className={'setup '+style} style={{'--setup-accent':color}}>
     <div className="setupGlow"/>
@@ -50,6 +52,8 @@ function Setup({onDone}){
         <label>Estilo<select value={style} onChange={e=>setStyle(e.target.value)}><option value="glass">Glass</option><option value="solid">Sólido</option><option value="minimal">Minimal</option></select></label>
         <label>Color de acento<div className="colorChoices">{['#8ab4ff','#b58cff','#63d6a5','#ff9b71','#ff7aa8'].map(x=><button key={x} style={{background:x}} className={color===x?'selected':''} onClick={()=>setColor(x)} aria-label={x}/>)}</div></label>
         <label>Fondo<select value={background} onChange={e=>setBackground(e.target.value)}><option value="gradient">Degradado</option><option value="plain">Liso</option><option value="aurora">Aurora</option></select></label>
+        <label>Densidad<select value={density} onChange={e=>setDensity(e.target.value)}><option value="comfortable">Cómoda</option><option value="compact">Compacta</option><option value="spacious">Amplia</option></select></label>
+        <label>Forma de interfaz<select value={radius} onChange={e=>setRadius(e.target.value)}><option value="soft">Suave</option><option value="sharp">Precisa</option><option value="pill">Redondeada</option></select></label>
       </div>
       <div className="setupPreview"><div className="previewDot" style={{background:color}}/><div><b>Así se verá dumbNavigator</b><span>Tu configuración se guarda en este dispositivo.</span></div></div>
       <button className="primary big" onClick={finish}>Empezar a navegar <span>→</span></button>
@@ -87,7 +91,7 @@ const Home=({navigate,openSettings})=>{
 }
 
 function SettingsPage({config,setConfig,onClose}){
-  const [draft,setDraft]=useState(config)
+  const [draft,setDraft]=useState({...config,density:config.density||'comfortable',radius:config.radius||'soft'})
   const save=()=>{write('dumbSetup',draft);setConfig(draft)}
   return <div className="settingsPage"><div className="settingsTop"><div><span className="eyebrow">PERSONALIZACIÓN</span><h1>Configuración</h1></div><button className="settingsClose" onClick={onClose}>×</button></div>
     <div className="settingsSections">
@@ -95,6 +99,8 @@ function SettingsPage({config,setConfig,onClose}){
         <label>Estilo<select value={draft.style} onChange={e=>setDraft({...draft,style:e.target.value})}><option value="glass">Glass</option><option value="solid">Sólido</option><option value="minimal">Minimal</option></select></label>
         <label>Fondo<select value={draft.background} onChange={e=>setDraft({...draft,background:e.target.value})}><option value="gradient">Degradado</option><option value="plain">Liso</option><option value="aurora">Aurora</option></select></label>
         <label>Color de acento<div className="colorChoices">{['#8ab4ff','#b58cff','#63d6a5','#ff9b71','#ff7aa8'].map(x=><button key={x} style={{background:x}} className={draft.color===x?'selected':''} onClick={()=>setDraft({...draft,color:x})}/>)}</div></label>
+        <label>Densidad<select value={draft.density} onChange={e=>setDraft({...draft,density:e.target.value})}><option value="comfortable">Cómoda</option><option value="compact">Compacta</option><option value="spacious">Amplia</option></select></label>
+        <label>Forma de interfaz<select value={draft.radius} onChange={e=>setDraft({...draft,radius:e.target.value})}><option value="soft">Suave</option><option value="sharp">Precisa</option><option value="pill">Redondeada</option></select></label>
       </section>
       <section><h2>Idioma</h2><p>Idioma de la interfaz del navegador.</p><select value={draft.language} onChange={e=>setDraft({...draft,language:e.target.value})}><option value="es">Español</option><option value="en">English</option><option value="de">Deutsch</option><option value="fr">Français</option></select></section>
       <button className="primary save" onClick={save}>Guardar cambios</button>
@@ -161,7 +167,7 @@ function App(){
   const close=i=>{if(tabs.length===1)return;setTabs(ts=>ts.filter((_,n)=>n!==i));setActive(a=>i<a?a-1:Math.min(a,tabs.length-2))}
   const bookmarks=read('dumbBookmarks',[]),bookmarked=bookmarks.some(x=>x.url===current.url)
   const content=current.url===DEFAULT_HOME?<Home navigate={navigate} openSettings={()=>setSettingsOpen(true)}/>:current.url===CREATE?<Creator navigate={navigate}/>:current.url==='dumb://bookmarks'?<div className="listPage"><h1>Marcadores</h1>{bookmarks.length?bookmarks.map(x=><button key={x.url} onClick={()=>navigate(x.url)}>{x.title||x.url}<span>→</span></button>):<p>Aún no tienes marcadores.</p>}</div>:current.url==='dumb://history'?<div className="listPage"><h1>Historial</h1>{read('dumbHistory',[]).slice().reverse().map(x=><button key={x} onClick={()=>navigate(x)}>{x}<span>→</span></button>)}</div>:<BrowserPage url={current.url} navigate={navigate} reloadToken={reloadToken}/>
-  return <div className="app" style={{'--accent':config?.color||'#8ab4ff'}}>
+  return <div className={'app '+(config.style||'solid')+' density-'+(config.density||'comfortable')+' radius-'+(config.radius||'soft')+' bg-'+(config.background||'aurora')} style={{'--accent':config?.color||'#63d6a5'}}>
     <div className="tabs">{tabs.map((t,i)=><div className={'tab '+(i===active?'active':'')} key={i} onClick={()=>setActive(i)}><span>{t.title}</span><button onClick={e=>{e.stopPropagation();close(i)}}>×</button></div>)}<button className="newtab" onClick={newTab}>＋</button></div>
     <div className="toolbar"><div className="actions"><button className="icon" disabled={!current.index} onClick={back}>←</button><button className="icon" disabled={current.index>=current.history.length-1} onClick={forward}>→</button><button className="icon" onClick={()=>navigate(DEFAULT_HOME)}>⌂</button><button className="icon" onClick={()=>setReloadToken(x=>x+1)}>↻</button></div><form className="address" onSubmit={e=>{e.preventDefault();navigate(address)}}><span>⌕</span><input value={address} onChange={e=>setAddress(e.target.value)} spellCheck="false"/></form><div className="actions"><button className="icon" onClick={()=>{const a=read('dumbBookmarks',[]);const i=a.findIndex(x=>x.url===current.url);i>=0?a.splice(i,1):a.push({url:current.url,title:current.title});write('dumbBookmarks',a);setReloadToken(x=>x+1)}}>{bookmarked?'★':'☆'}</button><button className="icon" onClick={()=>setMenu(!menu)}>☰</button></div></div>
     <main className="main">{content}{settingsOpen&&<div className="settingsOverlay"><SettingsPage config={config} setConfig={setConfig} onClose={()=>setSettingsOpen(false)}/></div>}{menu&&<div className="panel"><h2>dumbNavigator</h2><button onClick={()=>navigate('dumb://bookmarks')}>☆ Marcadores</button><button onClick={()=>navigate('dumb://history')}>◷ Historial</button><button onClick={()=>navigate('dumb://create')}>✦ Crear una web</button><button onClick={()=>{setSettingsOpen(true);setMenu(false)}}>⚙ Configuración</button><button onClick={()=>{localStorage.removeItem('dumbHistory');setMenu(false)}}>⌫ Borrar historial</button></div>}</main>
