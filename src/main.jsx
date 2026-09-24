@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client'
 import './styles.css'
 
 const DEFAULT_HOME='dumb://home'
-const SETTINGS='dumb://settings'
+const SETTINGS='dumb://settings'\nconst CREATE='dumb://create'
 const RESERVED=['google.com','apple.com','microsoft.com','amazon.com','youtube.com','instagram.com','facebook.com','tiktok.com','spotify.com','github.com','cloudflare.com','openai.com','wikipedia.org','reddit.com','discord.com','whatsapp.com','roblox.com','minecraft.net','nintendo.com','playstation.com','xbox.com','netflix.com']
 
 const read=(k,d)=>{try{return JSON.parse(window.localStorage.getItem(k)??'null')??d}catch{return d}}
@@ -15,8 +15,9 @@ const normalize=input=>{
   let s=input.trim()
   if(!s)return DEFAULT_HOME
   if(s==='settings')return SETTINGS
-  if(!s.includes('://'))s='dumb://'+s
-  if(!s.startsWith('dumb://')&&!/^https?:\/\//i.test(s))s='https://'+s
+  if(/^www\\.[^\\s]+$/i.test(s))s='https://'+s
+  else if(/^(?:https?:\\/\\/)?(?:[a-z0-9-]+\\.)+[a-z]{2,}(?:[/:?#].*)?$/i.test(s))s=s.startsWith('http')?s:'https://'+s
+  else if(!s.includes('://'))return 'https://www.google.com/search?q='+encodeURIComponent(s)
   try{return s.startsWith('dumb://')?(()=>{const u=new URL(s);return 'dumb://'+u.hostname.toLowerCase()+(u.pathname||'/')})():s}catch{return DEFAULT_HOME}
 }
 const titleFor=url=>url===DEFAULT_HOME?'Neue Tab':url===SETTINGS?'Einstellungen':host(url)||'Neue Tab'
@@ -138,10 +139,11 @@ function App(){
   const newTab=()=>{setTabs(ts=>[...ts,{url:DEFAULT_HOME,title:'Neue Tab',history:[DEFAULT_HOME],index:0}]);setActive(tabs.length)}
   const close=i=>{if(tabs.length===1)return;setTabs(ts=>ts.filter((_,n)=>n!==i));setActive(a=>i<a?a-1:Math.min(a,tabs.length-2))}
   const bookmarks=read('dumbBookmarks',[]),bookmarked=bookmarks.some(x=>x.url===current.url)
-  const content=current.url===DEFAULT_HOME?<Home navigate={navigate}/>:current.url===SETTINGS?<SettingsPage config={config} setConfig={setConfig}/>:current.url==='dumb://create'?<Creator navigate={navigate}/>:current.url==='dumb://bookmarks'?<div className="listPage"><h1>Marcadores</h1>{bookmarks.length?bookmarks.map(x=><button key={x.url} onClick={()=>navigate(x.url)}>{x.title||x.url}<span>→</span></button>):<p>Aún no tienes marcadores.</p>}</div>:current.url==='dumb://history'?<div className="listPage"><h1>Historial</h1>{read('dumbHistory',[]).slice().reverse().map(x=><button key={x} onClick={()=>navigate(x)}>{x}<span>→</span></button>)}</div>:<BrowserPage url={current.url} navigate={navigate} reloadToken={reloadToken}/>
+  const content=current.url===DEFAULT_HOME?<Home navigate={navigate}/>:current.url===SETTINGS?<SettingsPage config={config} setConfig={setConfig}/>:current.url===CREATE?<Creator navigate={navigate}/>:current.url==='dumb://bookmarks'?<div className="listPage"><h1>Marcadores</h1>{bookmarks.length?bookmarks.map(x=><button key={x.url} onClick={()=>navigate(x.url)}>{x.title||x.url}<span>→</span></button>):<p>Aún no tienes marcadores.</p>}</div>:current.url==='dumb://history'?<div className="listPage"><h1>Historial</h1>{read('dumbHistory',[]).slice().reverse().map(x=><button key={x} onClick={()=>navigate(x)}>{x}<span>→</span></button>)}</div>:<BrowserPage url={current.url} navigate={navigate} reloadToken={reloadToken}/>
+  const isSettings=current.url===SETTINGS
   return <div className="app" style={{'--accent':config?.color||'#8ab4ff'}}>
     <div className="tabs">{tabs.map((t,i)=><div className={'tab '+(i===active?'active':'')} key={i} onClick={()=>setActive(i)}><span>{t.title}</span><button onClick={e=>{e.stopPropagation();close(i)}}>×</button></div>)}<button className="newtab" onClick={newTab}>＋</button></div>
-    <div className="toolbar"><div className="actions"><button className="icon" disabled={!current.index} onClick={back}>←</button><button className="icon" disabled={current.index>=current.history.length-1} onClick={forward}>→</button><button className="icon" onClick={()=>navigate(DEFAULT_HOME)}>⌂</button><button className="icon" onClick={()=>setReloadToken(x=>x+1)}>↻</button></div><form className="address" onSubmit={e=>{e.preventDefault();navigate(address)}}><span>⌕</span><input value={address} onChange={e=>setAddress(e.target.value)} spellCheck="false"/></form><div className="actions"><button className="icon" onClick={()=>{const a=read('dumbBookmarks',[]);const i=a.findIndex(x=>x.url===current.url);i>=0?a.splice(i,1):a.push({url:current.url,title:current.title});write('dumbBookmarks',a);setReloadToken(x=>x+1)}}>{bookmarked?'★':'☆'}</button><button className="icon" onClick={()=>setMenu(!menu)}>☰</button></div></div>
+    <div className="toolbar"><div className="actions"><button className="icon" disabled={!current.index} onClick={back}>←</button><button className="icon" disabled={current.index>=current.history.length-1} onClick={forward}>→</button><button className="icon" onClick={()=>navigate(DEFAULT_HOME)}>⌂</button><button className="icon" onClick={()=>setReloadToken(x=>x+1)}>↻</button></div><form className="address" onSubmit={e=>{e.preventDefault();navigate(address)}}><span>{isSettings?'⚙':'⌕'}</span><input value={isSettings?'Configuración':address} onChange={e=>{if(!isSettings)setAddress(e.target.value)}} readOnly={isSettings} spellCheck="false"/></form><div className="actions"><button className="icon" onClick={()=>{const a=read('dumbBookmarks',[]);const i=a.findIndex(x=>x.url===current.url);i>=0?a.splice(i,1):a.push({url:current.url,title:current.title});write('dumbBookmarks',a);setReloadToken(x=>x+1)}}>{bookmarked?'★':'☆'}</button><button className="icon" onClick={()=>setMenu(!menu)}>☰</button></div></div>
     <main className="main">{content}{menu&&<div className="panel"><h2>dumbNavigator</h2><button onClick={()=>navigate('dumb://bookmarks')}>☆ Marcadores</button><button onClick={()=>navigate('dumb://history')}>◷ Historial</button><button onClick={()=>navigate('dumb://create')}>✦ Crear una web</button><button onClick={()=>navigate(SETTINGS)}>⚙ Configuración</button><button onClick={()=>{localStorage.removeItem('dumbHistory');setMenu(false)}}>⌫ Borrar historial</button></div>}</main>
   </div>
 }
