@@ -21,7 +21,7 @@ const normalize=input=>{
     if(u.protocol!=='dumb:')return DEFAULT_HOME
     const domain=u.hostname.toLowerCase()
     if(!domain)return DEFAULT_HOME
-    return 'dumb://'+domain+(u.pathname&&u.pathname!=='/'?u.pathname:'/')+(u.search||'')+(u.hash||'')
+    return 'dumb://'+domain+(u.pathname&&u.pathname!=='/'?u.pathname:'')+(u.search||'')+(u.hash||'')
   }catch{return DEFAULT_HOME}
 }
 
