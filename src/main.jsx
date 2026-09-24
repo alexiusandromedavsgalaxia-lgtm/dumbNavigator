@@ -14,7 +14,7 @@ const host=url=>{try{return new URL(url).hostname.toLowerCase()}catch{return ''}
 const normalize=input=>{
   let s=input.trim()
   if(!s)return DEFAULT_HOME
-    if(/^www\.[^\s]+$/i.test(s))s='https://'+s
+    if(/^uuu\.[^\s]+$/i.test(s))s='https://'+s
   else if(/^(?:https?:\/\/)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?:[/:?#].*)?$/i.test(s))s=s.startsWith('http')?s:'https://'+s
   else if(!s.includes('://'))return 'https://www.google.com/search?q='+encodeURIComponent(s)
   try{return s.startsWith('dumb://')?(()=>{const u=new URL(s);return 'dumb://'+u.hostname.toLowerCase()+(u.pathname||'/')})():s}catch{return DEFAULT_HOME}
