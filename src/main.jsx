@@ -4,7 +4,8 @@ import './styles.css'
 
 const DEFAULT_HOME='dumb://home'
 const CREATE='dumb://create'
-const RESERVED=['home','create','bookmarks','history']
+const DEVELOPE='dumb://uuu.develope.it'
+const RESERVED=['home','create','bookmarks','history','uuu.develope.it']
 
 const read=(k,d)=>{try{return JSON.parse(window.localStorage.getItem(k)??'null')??d}catch{return d}}
 const write=(k,v)=>{try{window.localStorage.setItem(k,JSON.stringify(v));return true}catch{return false}}
@@ -24,7 +25,7 @@ const normalize=input=>{
   }catch{return DEFAULT_HOME}
 }
 
-const titleFor=url=>url===DEFAULT_HOME?'Nueva pestaña':domainFromUrl(url)||'Nueva página'
+const titleFor=url=>url===DEFAULT_HOME?'Nueva pestaña':url===DEVELOPE?'DevelopE.it':domainFromUrl(url)||'Nueva página'
 const rewrite=html=>html.replace(/href\s*=\s*["'](dumb:\/\/[^"']+)["']/gi,(_,u)=>'href="#" data-nav="'+u.replaceAll('"','&quot;')+'"')
 
 const LANG={
@@ -88,6 +89,7 @@ const Home=({navigate,openSettings,config})=>{
       </form>
     </section>
     <section className="quickGrid">
+      <button className="featureCard" onClick={()=>navigate(DEVELOPE)}><span className="featureIcon">⌘</span><div><b>DevelopE.it</b><small>Entorno de desarrollo local</small></div><strong>→</strong></button>
       <button className="featureCard accent" onClick={()=>navigate('dumb://create')}>
         <span className="featureIcon">✦</span><div><b>{tr(language,'create')}</b><small>{tr(language,'createDesc')}</small></div><strong>→</strong>
       </button>
@@ -185,7 +187,7 @@ function App(){
   const newTab=()=>{setTabs(ts=>[...ts,{url:DEFAULT_HOME,title:tr(config.language,'newTab')||'Nueva pestaña',history:[DEFAULT_HOME],index:0}]);setActive(tabs.length)}
   const close=i=>{if(tabs.length===1)return;setTabs(ts=>ts.filter((_,n)=>n!==i));setActive(a=>i<a?a-1:Math.min(a,tabs.length-2))}
   const bookmarks=read('dumbBookmarks',[]),bookmarked=bookmarks.some(x=>x.url===current.url)
-  const content=current.url===DEFAULT_HOME?<Home navigate={navigate} openSettings={()=>setSettingsOpen(true)} config={config}/>:current.url===CREATE?<Creator navigate={navigate} config={config}/>:current.url==='dumb://bookmarks'?<div className="listPage"><h1>{tr(config.language,'bookmarks')}</h1>{bookmarks.length?bookmarks.map(x=><button key={x.url} onClick={()=>navigate(x.url)}>{x.title||x.url}<span>→</span></button>):<p>{tr(config.language,'noBookmarks')}</p>}</div>:current.url==='dumb://history'?<div className="listPage"><h1>{tr(config.language,'history')}</h1>{read('dumbHistory',[]).slice().reverse().map(x=><button key={x} onClick={()=>navigate(x)}>{x}<span>→</span></button>)}</div>:<BrowserPage url={current.url} navigate={navigate} reloadToken={reloadToken} config={config}/>
+  const content=current.url===DEFAULT_HOME?<Home navigate={navigate} openSettings={()=>setSettingsOpen(true)} config={config}/>:current.url===CREATE?<Creator navigate={navigate} config={config}/>:current.url===DEVELOPE?<Creator navigate={navigate} config={config}/>:current.url==='dumb://bookmarks'?<div className="listPage"><h1>{tr(config.language,'bookmarks')}</h1>{bookmarks.length?bookmarks.map(x=><button key={x.url} onClick={()=>navigate(x.url)}>{x.title||x.url}<span>→</span></button>):<p>{tr(config.language,'noBookmarks')}</p>}</div>:current.url==='dumb://history'?<div className="listPage"><h1>{tr(config.language,'history')}</h1>{read('dumbHistory',[]).slice().reverse().map(x=><button key={x} onClick={()=>navigate(x)}>{x}<span>→</span></button>)}</div>:<BrowserPage url={current.url} navigate={navigate} reloadToken={reloadToken} config={config}/>
   return <div className={'app '+(config.style||'solid')+' density-'+(config.density||'comfortable')+' radius-'+(config.radius||'soft')+' bg-'+(config.background||'aurora')} style={{'--accent':config?.color||'#63d6a5'}}>
     <div className="tabs">{tabs.map((t,i)=><div className={'tab '+(i===active?'active':'')} key={i} onClick={()=>setActive(i)}><span>{t.title}</span><button onClick={e=>{e.stopPropagation();close(i)}}>×</button></div>)}<button className="newtab" onClick={newTab}>＋</button></div>
     <div className="toolbar"><div className="actions"><button className="icon" disabled={!current.index} onClick={back}>←</button><button className="icon" disabled={current.index>=current.history.length-1} onClick={forward}>→</button><button className="icon" onClick={()=>navigate(DEFAULT_HOME)}>⌂</button><button className="icon" onClick={()=>setReloadToken(x=>x+1)}>↻</button></div><form className="address" onSubmit={e=>{e.preventDefault();navigate(address)}}><span>⌕</span><input value={address} onChange={e=>setAddress(e.target.value)} spellCheck="false"/></form><div className="actions"><button className="icon" onClick={()=>{const a=read('dumbBookmarks',[]);const i=a.findIndex(x=>x.url===current.url);i>=0?a.splice(i,1):a.push({url:current.url,title:current.title});write('dumbBookmarks',a);setReloadToken(x=>x+1)}}>{bookmarked?'★':'☆'}</button><button className="icon" onClick={()=>setMenu(!menu)}>☰</button></div></div>
