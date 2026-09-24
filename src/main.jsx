@@ -136,7 +136,6 @@ function Creator({navigate,config}){
   const publish=()=>{
     let h=domain.trim().toLowerCase().replace(/[^a-z0-9.-]/g,'')
     if(!h||RESERVED.includes(h)){alert('Elige otro nombre de web.');return}
-    if(!h.includes('.'))h=h+'.dev'
     const sites=read('dumbSites',{})
     sites[h]={mode,html:code,backend:backend?backendCode:null}
     write('dumbSites',sites)
@@ -150,7 +149,7 @@ function Creator({navigate,config}){
       <section className="livePanel"><div className="panelHead"><b>Vista previa</b><span>LIVE</span></div><iframe className="preview" srcDoc={preview} title="Vista previa" sandbox="allow-scripts allow-forms"/></section>
     </div>
     {backend&&<section className="backendPanel"><div className="panelHead"><b>Backend</b><span>{t('localBackend')}</span></div><textarea value={backendCode} onChange={e=>setBackendCode(e.target.value)} spellCheck="false"/><p>{t('localBackendDesc')}</p></section>}
-    <div className="publishBar"><input value={domain} onChange={e=>setDomain(e.target.value)} placeholder="nombre-de-tu-web"/><span>.dev</span><button className="primary" onClick={publish}>{t('publish')} →</button></div>
+    <div className="publishBar"><span className="protocolBadge">dumb://</span><input value={domain} onChange={e=>setDomain(e.target.value)} placeholder="tu-dominio.com, tu-dominio.cet, loquesea.xyz"/><button className="primary" onClick={publish}>{t('publish')} →</button></div>
   </div>
 }
 function BrowserPage({url,navigate,reloadToken,config}){
