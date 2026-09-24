@@ -24,7 +24,7 @@ const normalize=input=>{
   }catch{return DEFAULT_HOME}
 }
 
-const titleFor=url=>url===DEFAULT_HOME?'Neue Tab':domainFromUrl(url)||'Nueva página'
+const titleFor=url=>url===DEFAULT_HOME?'Nueva pestaña':domainFromUrl(url)||'Nueva página'
 const rewrite=html=>html.replace(/href\s*=\s*["'](dumb:\/\/[^"']+)["']/gi,(_,u)=>'href="#" data-nav="'+u.replaceAll('"','&quot;')+'"')
 
 const LANG={
@@ -123,12 +123,12 @@ function SettingsPage({config,setConfig,onClose}){
 
 function Creator({navigate,config}){
   const t=key=>tr(config.language,key)
-  const [mode,setMode]=useState('html')
+  const [mode]=useState('html')
   const [domain,setDomain]=useState('miweb')
   const [code,setCode]=useState('<!doctype html>\\n<html>\\n<head><title>Mi web</title></head>\\n<body style="font-family:system-ui;padding:40px">\\n  <h1>Hola 👋</h1>\\n  <p>Mi primera web en dumbNavigator.</p>\\n</body>\\n</html>')
   const [backend,setBackend]=useState(false)
   const [backendCode,setBackendCode]=useState('export async function onRequest(context) {\\n  return new Response(JSON.stringify({ ok: true } ), {\\n    headers: { "content-type": "application/json" }\\n  })\\n}')
-  const preview=mode==='react'?reactDocument():rewrite(code)
+  const preview=rewrite(code)
   const publish=()=>{
     let h=domain.trim().toLowerCase().replace(/[^a-z0-9.-]/g,'')
     if(!h||RESERVED.includes(h)){alert('Elige otro nombre de web.');return}
@@ -172,7 +172,7 @@ class AppErrorBoundary extends React.Component{
 
 function App(){
   const [config,setConfig]=useState(()=>read('dumbSetup',null))
-  const [tabs,setTabs]=useState(()=>[{url:DEFAULT_HOME,title:'Neue Tab',history:[DEFAULT_HOME],index:0}])
+  const [tabs,setTabs]=useState(()=>[{url:DEFAULT_HOME,title:tr(read('dumbSetup',{}).language||'es','newTab')||'Nueva pestaña',history:[DEFAULT_HOME],index:0}])
   const [active,setActive]=useState(0),[menu,setMenu]=useState(false),[address,setAddress]=useState(DEFAULT_HOME),[reloadToken,setReloadToken]=useState(0),[settingsOpen,setSettingsOpen]=useState(false)
   const current=tabs[active]||tabs[0]
   useEffect(()=>{setAddress(current?.url||DEFAULT_HOME)},[current?.url])
