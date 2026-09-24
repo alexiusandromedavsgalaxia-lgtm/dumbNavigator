@@ -129,12 +129,12 @@ function App(){
   const [config,setConfig]=useState(()=>read('dumbSetup',null))
   const [tabs,setTabs]=useState(()=>[{url:DEFAULT_HOME,title:'Neue Tab',history:[DEFAULT_HOME],index:0}])
   const [active,setActive]=useState(0),[menu,setMenu]=useState(false),[address,setAddress]=useState(DEFAULT_HOME),[reloadToken,setReloadToken]=useState(0)
-  if(!config)return <Setup onDone={setConfig}/>
   const current=tabs[active]||tabs[0]
+  useEffect(()=>{setAddress(current?.url||DEFAULT_HOME)},[current?.url])
+  if(!config)return <Setup onDone={setConfig}/>
   const navigate=url=>{const u=normalize(url);setTabs(ts=>ts.map((t,i)=>i===active?{...t,url:u,title:titleFor(u),history:[...t.history.slice(0,t.index+1),...(t.url===u?[]:[u])],index:t.url===u?t.index:t.index+1}:t));setAddress(u);setMenu(false);const h=read('dumbHistory',[]).filter(x=>x!==u);h.push(u);write('dumbHistory',h.slice(-200))}
   const back=()=>setTabs(ts=>ts.map((t,i)=>i===active&&t.index>0?{...t,index:t.index-1,url:t.history[t.index-1],title:titleFor(t.history[t.index-1])}:t))
   const forward=()=>setTabs(ts=>ts.map((t,i)=>i===active&&t.index<t.history.length-1?{...t,index:t.index+1,url:t.history[t.index+1],title:titleFor(t.history[t.index+1])}:t))
-  useEffect(()=>{setAddress(current?.url||DEFAULT_HOME)},[current?.url])
   const newTab=()=>{setTabs(ts=>[...ts,{url:DEFAULT_HOME,title:'Neue Tab',history:[DEFAULT_HOME],index:0}]);setActive(tabs.length)}
   const close=i=>{if(tabs.length===1)return;setTabs(ts=>ts.filter((_,n)=>n!==i));setActive(a=>i<a?a-1:Math.min(a,tabs.length-2))}
   const bookmarks=read('dumbBookmarks',[]),bookmarked=bookmarks.some(x=>x.url===current.url)
