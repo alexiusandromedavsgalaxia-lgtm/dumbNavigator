@@ -4,24 +4,29 @@ import './styles.css'
 
 const DEFAULT_HOME='dumb://home'
 const CREATE='dumb://create'
-const RESERVED=['google.com','apple.com','microsoft.com','amazon.com','youtube.com','instagram.com','facebook.com','tiktok.com','spotify.com','github.com','cloudflare.com','openai.com','wikipedia.org','reddit.com','discord.com','whatsapp.com','roblox.com','minecraft.net','nintendo.com','playstation.com','xbox.com','netflix.com']
+const RESERVED=['home','create','bookmarks','history']
 
 const read=(k,d)=>{try{return JSON.parse(window.localStorage.getItem(k)??'null')??d}catch{return d}}
 const write=(k,v)=>{try{window.localStorage.setItem(k,JSON.stringify(v));return true}catch{return false}}
 const clearStorageKey=k=>{try{window.localStorage.removeItem(k)}catch{}}
 
-const host=url=>{try{return new URL(url).hostname.toLowerCase()}catch{return ''}}
+const domainFromUrl=url=>{try{const u=new URL(url);return u.protocol==='dumb:'?u.hostname.toLowerCase():''}catch{return ''}}
 const normalize=input=>{
   let s=input.trim()
   if(!s)return DEFAULT_HOME
-    if(/^uuu\.[^\s]+$/i.test(s))s='https://'+s
-  else if(/^(?:https?:\/\/)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?:[/:?#].*)?$/i.test(s))s=s.startsWith('http')?s:'https://'+s
-  else if(!s.includes('://'))return 'https://www.google.com/search?q='+encodeURIComponent(s)
-  try{return s.startsWith('dumb://')?(()=>{const u=new URL(s);return 'dumb://'+u.hostname.toLowerCase()+(u.pathname||'/')})():s}catch{return DEFAULT_HOME}
+  if(!s.includes('://'))s='dumb://'+s
+  try{
+    const u=new URL(s)
+    if(u.protocol!=='dumb:')return DEFAULT_HOME
+    const domain=u.hostname.toLowerCase()
+    if(!domain)return DEFAULT_HOME
+    return 'dumb://'+domain+(u.pathname&&u.pathname!=='/'?u.pathname:'/')+(u.search||'')+(u.hash||'')
+  }catch{return DEFAULT_HOME}
 }
-const titleFor=url=>url===DEFAULT_HOME?'Neue Tab':host(url)||'Nueva página'
+
+const titleFor=url=>url===DEFAULT_HOME?'Neue Tab':domainFromUrl(url)||'Nueva página'
 const rewrite=html=>html.replace(/href\s*=\s*["'](dumb:\/\/[^"']+)["']/gi,(_,u)=>'href="#" data-nav="'+u.replaceAll('"','&quot;')+'"')
-const reactDocument=code=>'<!doctype html><html><head><meta charset="UTF-8"><script src="https://unpkg.com/react@18/umd/react.development.js"></script><script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script></head><body><div id="root"></div><script type="text/babel">'+code+'</script></body></html>'
+const reactDocument=()=>'<main class="notFound"><h1>Vista React no disponible</h1><p>El modo React se guarda localmente, pero esta versión solo ejecuta HTML local sin cargadores externos.</p></main>'
 
 const themes={
   dark:{bg:'#08090d',surface:'#15171d',text:'#f5f7fb',accent:'#8ab4ff'},
@@ -69,9 +74,9 @@ const Home=({navigate,openSettings})=>{
     <section className="hero">
       <span className="eyebrow">TU NAVEGADOR</span>
       <h1>¿qué quieres<br/><em>hacer hoy?</em></h1>
-      <p>Busca, navega, guarda tus sitios y crea los tuyos. Sin una “página de developer” pegada como portada.</p>
+      <p>Crea y navega tus webs locales. Todo vive dentro de dumbNavigator, usando únicamente direcciones dumb://.</p>
       <form className="homeSearch" onSubmit={e=>{e.preventDefault();navigate(e.currentTarget.q.value)}}>
-        <span>⌕</span><input name="q" placeholder="Busca o escribe una dirección..." autoFocus/><button>→</button>
+        <span>⌕</span><input name="q" placeholder="Escribe una dirección dumb://" autoFocus/><button>→</button>
       </form>
     </section>
     <section className="quickGrid">
@@ -86,7 +91,7 @@ const Home=({navigate,openSettings})=>{
       </button>
     </section>
     {sites.length>0&&<section className="section"><div className="sectionTitle"><b>Tus webs</b><span>{sites.length}</span></div><div className="siteList">{sites.slice(0,6).map(([h])=><button key={h} onClick={()=>navigate('dumb://'+h)}><span>◉</span><b>{h}</b><small>tu sitio</small><strong>→</strong></button>)}</div></section>}
-    <footer className="startFooter"><span>Privado · local-first</span><span>React · Vite</span></footer>
+    <footer className="startFooter"><span>Privado · local-first</span><span>Solo dumb:// · local-first</span></footer>
   </div>
 }
 
@@ -114,12 +119,10 @@ function Creator({navigate}){
   const [code,setCode]=useState('<!doctype html>\\n<html>\\n<head><title>Mi web</title></head>\\n<body style="font-family:system-ui;padding:40px">\\n  <h1>Hola 👋</h1>\\n  <p>Mi primera web en dumbNavigator.</p>\\n</body>\\n</html>')
   const [backend,setBackend]=useState(false)
   const [backendCode,setBackendCode]=useState('export async function onRequest(context) {\\n  return new Response(JSON.stringify({ ok: true } ), {\\n    headers: { "content-type": "application/json" }\\n  })\\n}')
-  const reactPreview=\`<!doctype html><html><head><meta charset="UTF-8"><script src="https://unpkg.com/react@18/umd/react.development.js"></script><script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script></head><body><div id="root"></div><script type="text/babel">\${code}</script></body></html>\`
-  const preview=mode==='react'?reactPreview:rewrite(code)
-  const publish=()=>{
-    let h=domain.trim().toLowerCase().replace(/^https?:\/\//,'').replace(/[^a-z0-9.-]/g,'')
-    if(!h||RESERVED.some(x=>h===x||h.endsWith('.'+x))){alert('Elige otro nombre de web.');return}
-    if(!h.includes('.'))h='uuu.'+h+'.dev'
+  const preview=mode==='react'?reactDocument():rewrite(code)\n  const publish=()=>{
+    let h=domain.trim().toLowerCase().replace(/[^a-z0-9.-]/g,'')
+    if(!h||RESERVED.includes(h)){alert('Elige otro nombre de web.');return}
+    if(!h.includes('.'))h=h+'.dev'
     const sites=read('dumbSites',{})
     sites[h]={mode,html:code,backend:backend?backendCode:null}
     write('dumbSites',sites)
@@ -138,9 +141,12 @@ function Creator({navigate}){
 }
 function BrowserPage({url,navigate,reloadToken}){
   const [html,setHtml]=useState('')
-  const [external,setExternal]=useState(false)
-  useEffect(()=>{const h=host(url);const site=h?read('dumbSites',{})[h]:null;if(site){setExternal(false);setHtml(site.mode==='react'?reactDocument(site.html):rewrite(site.html))}else if(/^https?:\/\//.test(url)){setExternal(true)}else{setExternal(false);setHtml('<main class="notFound"><span>404</span><h1>Página no encontrada</h1><p>Esta dirección todavía no existe en dumbNavigator.</p><button data-nav="dumb://home">Volver al inicio</button></main>')}},[url,reloadToken])
-  if(external)return <iframe className="page" src={url} title={url} referrerPolicy="no-referrer"/>
+  useEffect(()=>{
+    const h=domainFromUrl(url)
+    const site=h?read('dumbSites',{})[h]:null
+    if(site)setHtml(site.mode==='react'?reactDocument():rewrite(site.html))
+    else setHtml('<main class="notFound"><span>404</span><h1>Página no encontrada</h1><p>Esta dirección todavía no existe en dumbNavigator.</p><button data-nav="dumb://home">Volver al inicio</button></main>')
+  },[url,reloadToken])
   return <iframe className="page" srcDoc={html} title={url} sandbox="allow-scripts allow-forms" onLoad={e=>{try{e.currentTarget.contentDocument?.addEventListener('click',ev=>{const n=ev.target.closest('[data-nav]');if(n){ev.preventDefault();navigate(n.dataset.nav)}})}catch{}}}/>
 }
 
