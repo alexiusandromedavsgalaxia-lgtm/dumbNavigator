@@ -75,7 +75,8 @@ function Creator({navigate,config,developer=false}){
 function BrowserPage({url,navigate,reloadToken,config}){
  const [html,setHtml]=useState('')
  useEffect(()=>{const h=domainFromUrl(url),site=h?read('dumbSites',{})[h]:null;setHtml(site?rewrite(site.html,url):'<main class="notFound"><span>404 / LOCAL</span><h1>'+tr(config.language,'notFound')+'</h1><p>'+tr(config.language,'notFoundDesc')+'</p><button data-nav="dumb://home">'+tr(config.language,'backHome')+'</button></main>')},[url,reloadToken,config.language])
- return <iframe className="siteFrame" srcDoc={html} title={url} sandbox="allow-scripts allow-forms" onLoad={e=>{try{e.currentTarget.contentDocument?.addEventListener('click',ev=>{const n=ev.target.closest('[data-nav]');if(n){ev.preventDefault();navigate(n.dataset.nav)}const b=ev.target.closest('[data-blocked]');if(b)ev.preventDefault()}})}catch{}}}/>
+ const bindLocalNavigation=e=>{try{e.currentTarget.contentDocument?.addEventListener('click',ev=>{const n=ev.target.closest('[data-nav]');if(n){ev.preventDefault();navigate(n.dataset.nav)}const b=ev.target.closest('[data-blocked]');if(b)ev.preventDefault()}})}catch{}}
+ return <iframe className="siteFrame" srcDoc={html} title={url} sandbox="allow-scripts allow-forms" onLoad={bindLocalNavigation}/>
 }
 
 function ListPage({type,navigate,config}){
