@@ -54,7 +54,7 @@ function Home({projects,navigate}){
 
 function Projects({projects,navigate,setProjects}){
  const remove=async(id,e)=>{e.stopPropagation();if(confirm('¿borrar este proyecto?')){await deleteProject(id);setProjects(await getProjects())}}
- return <div className="page fullPage"><header className="pageHeader"><div><span className="eyebrow">LIBRARY</span><h1>tus proyectos</h1><p>todo lo que has creado en este navegador</p></div><button className="primary" onClick={()=>navigate(CREATE)}>＋ nuevo</button></header><div className="projectList">{projects.map((p,i)=><button className="projectRow" key={p.id} onClick={()=>navigate('dumb://'+p.domain)}><span>{String(i+1).padStart(2,'0')}</span><i>{p.name.slice(0,1).toUpperCase()}</i><div><b>{p.name}</b><small>{p.domain} · {p.type}</small></div><button className="ghost danger" onClick={e=>remove(p.id,e)}>×</button></button>)}{!projects.length&&<div className="empty dark"><span>＋</span><b>tu biblioteca está vacía</b><button className="primary" onClick={()=>navigate(CREATE)}>crear proyecto</button></div>}</div></div>
+ return <div className="page fullPage"><header className="pageHeader"><div><span className="eyebrow">LIBRARY</span><h1>tus proyectos</h1><p>todo lo que has creado en este navegador</p></div><button className="primary" onClick={()=>navigate(CREATE)}>＋ nuevo</button></header><div className="projectList">{projects.map((p,i)=><div className="projectRow" key={p.id} onClick={()=>navigate('dumb://'+p.domain)} role="button" tabIndex="0" onKeyDown={e=>e.key==='Enter'&&navigate('dumb://'+p.domain)}><span>{String(i+1).padStart(2,'0')}</span><i>{p.name.slice(0,1).toUpperCase()}</i><div><b>{p.name}</b><small>{p.domain} · {p.type}</small></div><button className="ghost danger" onClick={e=>remove(p.id,e)}>×</button></div>)}{!projects.length&&<div className="empty dark"><span>＋</span><b>tu biblioteca está vacía</b><button className="primary" onClick={()=>navigate(CREATE)}>crear proyecto</button></div>}</div></div>
 }
 
 function Bookmarks({navigate}){
@@ -86,7 +86,7 @@ function Creator({projects,setProjects,navigate,initialProject}){
 function Browser({url,projects,navigate}){
  const p=projects.find(x=>x.domain===domain(url))
  const [src,setSrc]=useState('')
- useEffect(()=>{if(!p){setSrc('');return}if(isRuntimeType(p)){setSrc(getRuntimeUrl());return}const path=pathOf(url).replace(/^\//,'')||p.entry;const file=p.files[path]??p.files[p.entry];if(file!==undefined)setSrc(fileUrl(path,file))},[url,p])
+ useEffect(()=>{if(!p){setSrc('');return}if(isRuntimeType(p)){setSrc(getRuntimeUrl());return}const path=pathOf(url).replace(/^\//,'')||p.entry;const file=p.files[path]??p.files[p.entry];if(file!==undefined){const value=ext(path)==='html'&&typeof file==='string'?rewriteStatic(file,p,'/'+path.split('/').slice(0,-1).join('/')):file;setSrc(fileUrl(path,value))}},[url,p])
  if(!p)return <div className="notFound"><span>404 / LOCAL</span><h1>esta web no existe aquí</h1><p>ese dominio no está creado o importado en dumbNavigator</p><button className="primary" onClick={()=>navigate(CREATE)}>crear / importar web</button></div>
  if(isRuntimeType(p)&&!src)return <div className="notFound"><span>SERVER OFFLINE</span><h1>el servidor está apagado</h1><p>abre develope y pulsa ejecutar</p><button className="primary" onClick={()=>navigate(CREATE)}>abrir proyecto</button></div>
  return <iframe title={visible(url)} src={src} className="siteFrame" sandbox="allow-scripts allow-forms allow-same-origin allow-modals"/>
