@@ -15,6 +15,7 @@ export function randomToken(){
  const bytes=new Uint8Array(32);crypto.getRandomValues(bytes)
  return [...bytes].map(x=>x.toString(16).padStart(2,'0')).join('')
 }
+function base64(bytes){let out='';for(let i=0;i<bytes.length;i+=0x8000)out+=String.fromCharCode(...bytes.subarray(i,i+0x8000));return btoa(out)}
 export function normalizeFiles(input){
  if(!input||typeof input!=='object'||Array.isArray(input))throw Error('files inválidos')
  const entries=Object.entries(input)
@@ -28,7 +29,7 @@ export function normalizeFiles(input){
   const bytes=encoding==='utf8'?new TextEncoder().encode(value):new Uint8Array(value.data)
   total+=bytes.byteLength
   if(total>MAX_TOTAL_BYTES)throw Error('el proyecto supera el límite público de 12 MB')
-  const content=encoding==='utf8'?value:btoa(String.fromCharCode(...bytes))
+  const content=encoding==='utf8'?value:base64(bytes)
   files.push({path,encoding,content})
  }
  return files
