@@ -2,6 +2,7 @@ let instancePromise=null
 let activeProcess=null
 let activeProjectId=null
 let activeUrl=''
+let activeServerHandler=null
 const readyListeners=new Set()
 async function getInstance(){
  if(!instancePromise){
@@ -23,7 +24,8 @@ function tree(files){
 export async function startProject(project,onLog=()=>{}){
  const wc=await getInstance()
  if(activeProcess){try{activeProcess.kill()}catch{}}
- activeProcess=null;activeUrl='';emit('')
+ if(activeServerHandler&&instancePromise){try{(await instancePromise).off?.('server-ready',activeServerHandler)}catch{}}
+ activeServerHandler=null;activeProcess=null;activeProjectId=null;activeUrl='';emit('')
  try{await wc.fs.rm('/workspace',{recursive:true,force:true})}catch{}
  await wc.fs.mkdir('/workspace',{recursive:true})
  await wc.mount(tree(project.files),{mountPoint:'/workspace'})
@@ -40,8 +42,8 @@ export async function startProject(project,onLog=()=>{}){
  const process=await wc.spawn('npm',['run',command],{cwd:'/workspace'})
  activeProcess=process
  process.output.pipeTo(new WritableStream({write:data=>onLog(String(data))})).catch(()=>{})
- const handler=(port,url)=>{if(activeProjectId===project.id)emit(url)}
- wc.on('server-ready',handler)
+ activeServerHandler=(port,url)=>{if(activeProjectId===project.id)emit(url)}
+ wc.on('server-ready',activeServerHandler)
  return {wc,process}
 }
 export async function stopProject(){
