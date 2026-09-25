@@ -4,7 +4,7 @@ export async function onRequestGet({request,env,params}){
  const domain=cleanDomain(params.domain);if(!domain)return json({published:false},404)
  const site=await env.DB.prepare('SELECT domain,name,type,entry,updated_at FROM sites WHERE domain=? AND published=1').bind(domain).first()
  if(!site)return json({published:false},404)
- return json({published:true,...site,publicUrl:new URL('/sites/'+encodeURIComponent(domain),request.url).href})
+ return json({published:true,...site,publicUrl:new URL('/sites/'+encodeURIComponent(domain)+'/',request.url).href})
 }
 export async function onRequestDelete({request,env,params}){
  if(!env.DB)return json({error:'D1 no está configurado'},503)
