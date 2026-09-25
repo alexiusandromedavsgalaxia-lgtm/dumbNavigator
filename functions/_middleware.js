@@ -1,13 +1,1 @@
-export async function onRequest(context){
-  const {request,env}=context
-  const response=await context.next()
-  if(response.status!==404)return response
-
-  const path=new URL(request.url).pathname
-  if(path==='/api' || path.startsWith('/api/'))return response
-  if(path==='/sites' || path.startsWith('/sites/'))return response
-
-  const home=await env.ASSETS.fetch(new URL('/',request.url))
-  if(!home.ok)return response
-  return new Response(home.body,home)
-}
+export async function onRequest(c){const r=await c.next();if(r.status!==404)return r;const p=new URL(c.request.url).pathname;if(p==='/api'||p.startsWith('/api/')||p==='/sites'||p.startsWith('/sites/'))return r;const h=await c.env.ASSETS.fetch(new URL('/',c.request.url));return h.ok?new Response(h.body,h):r}
