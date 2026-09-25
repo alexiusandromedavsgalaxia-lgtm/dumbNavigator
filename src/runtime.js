@@ -51,3 +51,49 @@ export async function stopProject(){
  activeProcess=null;activeProjectId=null;activeUrl='';emit('')
 }
 export function getRuntimeUrl(){return activeUrl}
+
+
+const textOutput=/\.(html?|css|js|mjs|cjs|json|svg|txt|xml|map)$/i
+async function readOutput(wc,root,onLog=()=>{}){
+ const result={}
+ async function walk(dir,relative=''){
+  const entries=await wc.fs.readdir(dir,{withFileTypes:true})
+  for(const entry of entries){
+   const name=String(entry.name),full=dir+'/'+name,rel=relative?relative+'/'+name:name
+   if(entry.isDirectory())await walk(full,rel)
+   else{
+    const bytes=await wc.fs.readFile(full)
+    result[rel]=textOutput.test(name)?new TextDecoder().decode(bytes):{data:Array.from(bytes)}
+   }
+  }
+ }
+ await walk(root)
+ return result
+}
+export async function buildProjectForPublish(project,onLog=()=>{}){
+ const wc=await getInstance()
+ if(activeProcess){try{activeProcess.kill()}catch{}}
+ if(activeServerHandler){try{wc.off?.('server-ready',activeServerHandler)}catch{}}
+ activeProcess=null;activeServerHandler=null;activeProjectId=null;activeUrl='';emit('')
+ try{await wc.fs.rm('/workspace',{recursive:true,force:true})}catch{}
+ await wc.fs.mkdir('/workspace',{recursive:true})
+ await wc.mount(tree(project.files),{mountPoint:'/workspace'})
+ let pkg
+ try{pkg=project.files['package.json']?JSON.parse(typeof project.files['package.json']==='string'?project.files['package.json']:''):null}catch{throw Error('package.json no es JSON válido')}
+ if(!pkg)throw Error('este proyecto no tiene package.json')
+ if(!pkg.scripts?.build)throw Error('este proyecto no tiene un script build para publicar')
+ const install=await wc.spawn('npm',['install','--no-audit','--no-fund'],{cwd:'/workspace'})
+ install.output.pipeTo(new WritableStream({write:data=>onLog(String(data))})).catch(()=>{})
+ if(await install.exit!==0)throw Error('npm install terminó con error')
+ const build=await wc.spawn('npm',['run','build'],{cwd:'/workspace'})
+ build.output.pipeTo(new WritableStream({write:data=>onLog(String(data))})).catch(()=>{})
+ if(await build.exit!==0)throw Error('npm run build terminó con error')
+ let root=null
+ for(const candidate of ['/workspace/dist','/workspace/build','/workspace/out']){
+  try{await wc.fs.readdir(candidate);root=candidate;break}catch{}
+ }
+ if(!root)throw Error('no encuentro dist, build ni out después del build')
+ const files=await readOutput(wc,root,onLog)
+ if(!files['index.html'])throw Error('el build no generó index.html')
+ return {files,entry:'index.html'}
+}
