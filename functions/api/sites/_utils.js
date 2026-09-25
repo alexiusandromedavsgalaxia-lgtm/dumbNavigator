@@ -1,5 +1,6 @@
 const MAX_FILES=500
-const MAX_TOTAL_BYTES=12*1024*1024
+const MAX_FILE_BYTES=1400000
+const MAX_TOTAL_BYTES=8*1024*1024
 const RESERVED=new Set(['home','create','bookmarks','history','projects','settings','develope.it','api','sites'])
 export function cleanDomain(value){
  const d=String(value||'').trim().toLowerCase().replace(/^https?:\/\//,'').split('/')[0]
@@ -27,6 +28,7 @@ export function normalizeFiles(input){
   if(typeof value!=='string'&&(!value||typeof value!=='object'||!Array.isArray(value.data)))throw Error('contenido de archivo inválido')
   const encoding=typeof value==='string'?'utf8':'base64'
   const bytes=encoding==='utf8'?new TextEncoder().encode(value):new Uint8Array(value.data)
+  if(bytes.byteLength>MAX_FILE_BYTES)throw Error('un archivo supera el límite público de 1.4 MB')
   total+=bytes.byteLength
   if(total>MAX_TOTAL_BYTES)throw Error('el proyecto supera el límite público de 12 MB')
   const content=encoding==='utf8'?value:base64(bytes)
