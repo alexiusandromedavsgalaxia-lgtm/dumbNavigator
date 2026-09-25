@@ -17,7 +17,8 @@ export async function onRequest({request,env,params}){
  if(!site)return new Response('Site not found',{status:404,headers:{'Cache-Control':'no-store'}})
  if(!path)path=site.entry
  if(path.includes('..')||path.split('/').some(x=>!x||x==='.'||x==='..'))return new Response('Bad path',{status:400})
- const file=await env.DB.prepare('SELECT encoding,content FROM site_files WHERE domain=? AND path=?').bind(domain,path).first()
+ let file=await env.DB.prepare('SELECT encoding,content FROM site_files WHERE domain=? AND path=?').bind(domain,path).first()
+ if(!file&&(!path.includes('.')||path.endsWith('/')))file=await env.DB.prepare('SELECT encoding,content FROM site_files WHERE domain=? AND path=?').bind(domain,site.entry).first()
  if(!file)return new Response('File not found',{status:404})
  let body=file.encoding==='base64'?decodeBase64(file.content):file.content
  if(typeof body==='string'&&(/\.html?$/i.test(path)||/\.css$/i.test(path)))body=rewriteRootUrls(body,domain,path)
