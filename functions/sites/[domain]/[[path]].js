@@ -21,6 +21,6 @@ export async function onRequest({request,env,params}){
  if(!file)return new Response('File not found',{status:404})
  let body=file.encoding==='base64'?decodeBase64(file.content):file.content
  if(typeof body==='string'&&(/\.html?$/i.test(path)||/\.css$/i.test(path)))body=rewriteRootUrls(body,domain,path)
- const headers={'Content-Type':contentType(path),'Cache-Control':'public, max-age=60, s-maxage=300'}
+ const headers={'Content-Type':contentType(path),'Cache-Control':'public, max-age=60, s-maxage=300','Content-Security-Policy':"sandbox allow-scripts allow-forms allow-modals; frame-ancestors 'self'",'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'}
  return request.method==='HEAD'?new Response(null,{status:200,headers}):new Response(body,{status:200,headers})
 }
