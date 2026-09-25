@@ -19,6 +19,6 @@ export async function onRequestPost({request,env}){
    env.DB.prepare('DELETE FROM site_files WHERE domain=?').bind(domain),
    ...files.map(f=>env.DB.prepare('INSERT INTO site_files(domain,path,encoding,content) VALUES(?,?,?,?)').bind(domain,f.path,f.encoding,f.content))
   ])
-  return json({ok:true,domain,name,type,entry,publicUrl:new URL('/sites/'+encodeURIComponent(domain),request.url).href,token:token||undefined,updatedAt:now})
+  return json({ok:true,domain,name,type,entry,publicUrl:new URL('/sites/'+encodeURIComponent(domain)+'/',request.url).href,token:token||undefined,updatedAt:now})
  }catch(error){return json({error:error?.message||'no se pudo publicar'},400)}
 }
