@@ -6,19 +6,19 @@ import {startProject,stopProject,onRuntimeReady,getRuntimeUrl} from './runtime'
 
 const HOME='dumb://home'
 const CREATE='dumb://create'
-const DEVELOPE='dumb://uuu.develope.it'
-const RESERVED=new Set(['home','create','bookmarks','history','settings','uuu.develope.it'])
+const DEVELOPE='dumb://develope.it'
+const RESERVED=new Set(['home','create','bookmarks','history','projects','settings','develope.it'])
 const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)??'null')??d}catch{return d}}
 const write=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch{return false}}
 const normalize=input=>{
  let s=String(input??'').trim()
  if(!s)return HOME
- if(/^https?:\/\//i.test(s))return HOME
- if(!s.includes('://'))s='dumb://'+s
- try{const u=new URL(s);if(u.protocol!=='dumb:'||!u.hostname)return HOME;return 'dumb://'+u.hostname.toLowerCase()+(u.pathname&&u.pathname!=='/'?u.pathname:'/')+(u.search||'')+(u.hash||'')}
+ if(/^https?:\/\//i.test(s))return s
+ if(!s.includes('://')){if(/^[a-z0-9-]+(\.[a-z0-9-]+)+(?::\d+)?(?:\/.*)?$/i.test(s))s='https://'+s;else s='dumb://'+s}
+ try{const u=new URL(s);if(!['dumb:','http:','https:'].includes(u.protocol)||!u.hostname)return HOME;return u.protocol==='dumb:'?'dumb://'+u.hostname.toLowerCase()+(u.pathname&&u.pathname!=='/'?u.pathname:'/')+(u.search||'')+(u.hash||''):u.href}
  catch{return HOME}
 }
-const visible=url=>{try{const u=new URL(url);return u.protocol==='dumb:'?(u.hostname+(u.pathname&&u.pathname!=='/'?u.pathname:'')+(u.search||'')+(u.hash||'')):''}catch{return ''}}
+const visible=url=>{try{const u=new URL(url);return u.protocol==='dumb:'?(u.hostname+(u.pathname&&u.pathname!=='/'?u.pathname:'')+(u.search||'')+(u.hash||'')):u.hostname+(u.pathname&&u.pathname!=='/'?u.pathname:'')+(u.search||'')}catch{return ''}}
 const domain=url=>{try{return new URL(url).hostname.toLowerCase()}catch{return ''}}
 const pathOf=url=>{try{return decodeURIComponent(new URL(url).pathname||'/')}catch{return '/'}}
 const isRuntimeType=p=>['react','vite','angular','node'].includes(p?.type)
@@ -87,7 +87,7 @@ function Browser({url,projects,navigate}){
  const p=projects.find(x=>x.domain===domain(url))
  const [src,setSrc]=useState('')
  useEffect(()=>{if(!p){setSrc('');return}if(isRuntimeType(p)){setSrc(getRuntimeUrl());return}const path=pathOf(url).replace(/^\//,'')||p.entry;const file=p.files[path]??p.files[p.entry];if(file!==undefined){const value=ext(path)==='html'&&typeof file==='string'?rewriteStatic(file,p,'/'+path.split('/').slice(0,-1).join('/')):file;setSrc(fileUrl(path,value))}},[url,p])
- if(!p)return <div className="notFound"><span>404 / LOCAL</span><h1>esta web no existe aquí</h1><p>ese dominio no está creado o importado en dumbNavigator</p><button className="primary" onClick={()=>navigate(CREATE)}>crear / importar web</button></div>
+ if(/^https?:\/\//i.test(url))return <div className="externalPage"><div className="externalNotice"><span>EXTERNAL WEB</span><h1>{domain(url)}</h1><p>este dominio pertenece a la web real, no al internet local.</p><button className="primary" onClick={()=>window.open(url,'_blank','noopener,noreferrer')}>abrir en navegador ↗</button><button className="ghost" onClick={()=>navigate(HOME)}>volver al inicio</button></div></div>\n if(!p)return <div className="notFound"><span>404 / LOCAL</span><h1>esta web no existe aquí</h1><p>ese dominio no está creado o importado en dumbNavigator</p><button className="primary" onClick={()=>navigate(CREATE)}>crear / importar web</button></div>
  if(isRuntimeType(p)&&!src)return <div className="notFound"><span>SERVER OFFLINE</span><h1>el servidor está apagado</h1><p>abre develope y pulsa ejecutar</p><button className="primary" onClick={()=>navigate(CREATE)}>abrir proyecto</button></div>
  return <iframe title={visible(url)} src={src} className="siteFrame" sandbox="allow-scripts allow-forms allow-same-origin allow-modals"/>
 }
@@ -108,7 +108,7 @@ function App(){
  useEffect(()=>setAddress(visible(url)),[url])
  const current=useMemo(()=>tabs[activeTab],[tabs,activeTab])
  const navigate=useCallback(next=>{const u=normalize(next);setUrl(u);setTabs(ts=>ts.map((t,i)=>i===activeTab?{...t,url:u}:t));setMenu(false);const history=read('dumbHistory',[]);write('dumbHistory',[...history.filter(x=>x!==u),u].slice(-100))},[activeTab])
- const submit=e=>{e.preventDefault();navigate(address)}
+ const submit=e=>{e.preventDefault();const q=address.trim();if(!q){navigate(HOME);return}const clean=q.replace(/^https?:\/\//i,'').replace(/\/$/,'').toLowerCase();const local=projects.find(p=>p.domain.toLowerCase()===clean||p.name.toLowerCase()===q.toLowerCase());navigate(local?'dumb://'+local.domain:q)}
  const newTab=()=>{const t={id:crypto.randomUUID(),url:HOME};setTabs(ts=>[...ts,t]);setActiveTab(tabs.length);setUrl(HOME)}
  const closeTab=i=>{if(tabs.length===1)return;const next=tabs.filter((_,n)=>n!==i);const idx=Math.min(i,next.length-1);setTabs(next);setActiveTab(idx);setUrl(next[idx].url)}
  const selectTab=i=>{setActiveTab(i);setUrl(tabs[i].url)}
@@ -116,7 +116,7 @@ function App(){
  const goHome=()=>navigate(HOME)
  if(!setup)return <Setup done={()=>setSetup(read('dumbSetup',{}))}/>
  const path=domain(url)
- const page=url===HOME?'home':path==='projects'?'projects':path==='bookmarks'?'bookmarks':path==='settings'?'settings':(url===CREATE||url===DEVELOPE)?'creator':'browser'
+ const page=url===HOME?'home':path==='projects'?'projects':path==='bookmarks'?'bookmarks':path==='settings'?'settings':path==='develope.it'?'creator':'browser'
  return <div className="app"><header className="browserChrome"><div className="traffic"><i/><i/><i/></div><button className="brandBtn" onClick={goHome}>d</button><div className="tabs">{tabs.map((t,i)=><button key={t.id} className={'tab '+(i===activeTab?'active':'')} onClick={()=>selectTab(i)}><span>{domain(t.url)||'inicio'}</span>{tabs.length>1&&<b onClick={e=>{e.stopPropagation();closeTab(i)}}>×</b>}</button>)}<button className="newTab" onClick={newTab}>＋</button></div><button className="windowBtn" onClick={()=>setMenu(v=>!v)}>☰</button></header><div className="toolbar"><div className="navButtons"><button onClick={()=>window.history.back()}>‹</button><button onClick={()=>window.history.forward()}>›</button><button onClick={goHome}>⌂</button></div><form className="address" onSubmit={submit}><span>⌕</span><input value={address} onChange={e=>setAddress(e.target.value)} placeholder="buscar o escribir un dominio"/><button type="button" onClick={toggleBookmark}>☆</button><button type="submit">↵</button></form><div className="toolbarRight"><button onClick={()=>setSidebar(v=>!v)}>☷</button><button onClick={()=>setMenu(v=>!v)}>⋯</button></div></div>{menu&&<Menu navigate={navigate} close={()=>setMenu(false)} projects={projects}/>}<main className="browserBody">{page==='home'?<Home projects={projects} navigate={navigate}/>:page==='projects'?<Projects projects={projects} setProjects={setProjects} navigate={navigate}/>:page==='bookmarks'?<Bookmarks navigate={navigate}/>:page==='settings'?<Settings navigate={navigate}/>:<Browser url={url} projects={projects} navigate={navigate}/>}</main>{sidebar&&<aside className="sidePanel"><header><b>sidebar</b><button onClick={()=>setSidebar(false)}>×</button></header><button onClick={()=>navigate('dumb://bookmarks')}>☆ <span>marcadores</span></button><button onClick={()=>navigate('dumb://projects')}>▦ <span>proyectos</span></button><button onClick={()=>navigate(DEVELOPE)}>⌘ <span>develope</span></button><div className="sideHint">dumbNavigator<br/><small>tu internet local</small></div></aside>}</div>
 }
 createRoot(document.getElementById('root')).render(<App/>)
