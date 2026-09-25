@@ -25,7 +25,7 @@ export async function startProject(project,onLog=()=>{}){
  const wc=await getInstance()
  if(activeProcess){try{activeProcess.kill()}catch{}}
  if(activeServerHandler&&instancePromise){try{(await instancePromise).off?.('server-ready',activeServerHandler)}catch{}}
- activeServerHandler=null;activeProcess=null;activeProjectId=null;activeUrl='';emit('')
+ activeServerHandler=null;activeProcess=null;activeProjectId=project.id;activeUrl='';emit('')
  try{await wc.fs.rm('/workspace',{recursive:true,force:true})}catch{}
  await wc.fs.mkdir('/workspace',{recursive:true})
  await wc.mount(tree(project.files),{mountPoint:'/workspace'})
@@ -39,11 +39,11 @@ export async function startProject(project,onLog=()=>{}){
  const command=scripts.dev?'dev':scripts.start?'start':scripts.serve?'serve':null
  if(!command)throw Error('no encuentro un script dev, start o serve en package.json')
  activeProjectId=project.id
+ activeServerHandler=(port,url)=>{if(activeProjectId===project.id)emit(url)}
+ wc.on('server-ready',activeServerHandler)
  const process=await wc.spawn('npm',['run',command],{cwd:'/workspace'})
  activeProcess=process
  process.output.pipeTo(new WritableStream({write:data=>onLog(String(data))})).catch(()=>{})
- activeServerHandler=(port,url)=>{if(activeProjectId===project.id)emit(url)}
- wc.on('server-ready',activeServerHandler)
  return {wc,process}
 }
 export async function stopProject(){
