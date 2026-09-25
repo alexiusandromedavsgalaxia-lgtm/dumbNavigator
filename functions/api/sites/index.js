@@ -4,7 +4,7 @@ export async function onRequestPost({request,env}){
  try{
   const body=await request.json(),domain=cleanDomain(body.domain)
   if(!domain)return json({error:'dominio inválido o reservado'},400)
-  const name=String(body.name||domain).slice(0,120),type=String(body.type||'static').slice(0,32),entry=String(body.entry||'index.html').replace(/^\/+,'')
+  const name=String(body.name||domain).slice(0,120),type=String(body.type||'static').slice(0,32),entry=String(body.entry||'index.html').replace(/^\/+/, '')
   const files=normalizeFiles(body.files)
   if(!files.some(f=>f.path===entry))return json({error:'el archivo de entrada no existe'},400)
   const existing=await env.DB.prepare('SELECT token_hash FROM sites WHERE domain=?').bind(domain).first()
