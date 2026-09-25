@@ -1,6 +1,26 @@
 # dumbNavigator
 
-Web-only browser project built with React and Vite.
+dumbNavigator is a web-only local browser + mini web studio built with React, Vite and WebContainer.
+
+## Features
+
+- Chrome/Safari/Opera-inspired tabs, toolbar and sidebar
+- local `dumb://` domains
+- IndexedDB project storage
+- static HTML/CSS/JS preview
+- React/Vite/Angular/Node projects through WebContainer
+- GitHub public repository importer
+- project library and bookmarks
+- Cloudflare Pages compatible headers
+
+## Cloudflare Pages
+
+- Framework preset: Vite
+- Build command: `npm run build`
+- Build output directory: `dist`
+- Node.js: 22
+
+The `public/_headers` file supplies the COOP/COEP headers required by WebContainer.
 
 ## Local development
 
@@ -9,26 +29,8 @@ npm install
 npm run dev
 ```
 
-Production build:
+Production:
 
 ```bash
 npm run build
 ```
-
-Vite writes the production site to `dist/`.
-
-## Cloudflare Pages
-
-This repository is prepared for a direct **Cloudflare Pages** deployment. GitHub Actions is not the deployment mechanism.
-
-Use these Pages settings:
-
-- **Root directory:** `/`
-- **Framework preset:** Vite
-- **Build command:** `npm run build`
-- **Build output directory:** `dist`
-- **Node.js version:** 22
-
-The project also includes `.nvmrc` and a Node engine requirement so the build uses a modern Node 22 runtime.
-
-No Android or desktop build is required. The repository is web-only.
