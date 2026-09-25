@@ -1,0 +1,8 @@
+name = "dumbnavigator"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-09-25"
+
+# Cloudflare Pages > Settings > Functions > D1 binding
+# Variable name: DB
+# Then run migrations/0001_public_sites.sql against that D1 database.
+# Add the database_id here only if you want Wrangler to manage the binding.
