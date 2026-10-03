@@ -1,0 +1,5 @@
+const NAME="dumbNavigator";const STORE="projects";
+function open(){return new Promise((resolve,reject)=>{const r=indexedDB.open(NAME,2);r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains(STORE))db.createObjectStore(STORE,{keyPath:"id"})};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
+export async function loadProjects(){const db=await open();return new Promise((resolve,reject)=>{const r=db.transaction(STORE).objectStore(STORE).getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
+export async function saveProject(project){const db=await open();return new Promise((resolve,reject)=>{const r=db.transaction(STORE,"readwrite").objectStore(STORE).put(project);r.onsuccess=()=>resolve();r.onerror=()=>reject(r.error)})}
+export async function deleteProject(id){const db=await open();return new Promise((resolve,reject)=>{const r=db.transaction(STORE,"readwrite").objectStore(STORE).delete(id);r.onsuccess=()=>resolve();r.onerror=()=>reject(r.error)})}

@@ -1,30 +1,36 @@
 # dumbNavigator
 
-Navegador web experimental con una interfaz tipo browser y una capa de direccionamiento propia.
+dumbNavigator is an experimental browser shell built around a local `dumb://` namespace and a family of conceptual web protocols.
 
-## Direcciones
+## Protocol family
 
-- `dumb://` · páginas y proyectos locales del navegador.
-- `httc://` · **HTTC**, protocolo universal para la web.
-- `amwp://` · American Web Protocol.
-- `euwp://` · European Web Protocol.
-- `aswp://` · Asian Web Protocol.
-- `afwp://` · African Web Protocol.
-- `ocwp://` · Oceania Web Protocol.
+- `httc://` · HTTC, universal/common web
+- `amwp://` · American Web Protocol
+- `euwp://` · European Web Protocol
+- `aswp://` · Asian Web Protocol
+- `afwp://` · African Web Protocol
+- `ocwp://` · Oceania Web Protocol
 
-Las rutas HTTC y regionales se resuelven hacia HTTPS al salir del motor local.
+Regional and HTTC addresses are translated to HTTPS only when leaving the local browser shell.
+
+## Storage
+
+The existing public-site D1 schema is intentionally preserved:
+
+- `sites`
+- `site_files`
+
+Local projects use IndexedDB in the browser.
 
 ## Develope
 
-Incluye un pequeño estudio para crear archivos HTML/CSS/JS, previsualizarlos y publicarlos mediante Cloudflare Pages Functions + D1.
+The rebuilt Develope studio can create HTML/CSS/JS files, preview them, save local projects and publish static projects through the existing D1-backed Pages Functions.
 
-## Desarrollo
+## Development
 
 ```bash
 npm install
-npm run dev
-```
-
-```bash
 npm run build
 ```
+
+The database migration is not replaced by the frontend rebuild.

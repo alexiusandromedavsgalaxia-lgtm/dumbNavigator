@@ -1,142 +1,110 @@
 import React,{useEffect,useMemo,useState}from"react";
 import{createRoot}from"react-dom/client";
 import"./styles.css";
-import{getProjects,putProject,removeProject}from"./store";
+import{loadProjects,saveProject,deleteProject}from"./storage.js";
 
-const HOME="dumb://home";
-const CREATE="dumb://create";
-const RESERVED=new Set(["home","create","projects","bookmarks","history","settings","protocols","about","api","sites"]);
-const PROTOCOLS={
-  httc:{label:"HTTC",name:"HyperText Transfer for the Common Web",scope:"universal",icon:"◎"},
-  amwp:{label:"AMWP",name:"American Web Protocol",scope:"Americas",icon:"◉"},
-  euwp:{label:"EUWP",name:"European Web Protocol",scope:"Europe",icon:"◇"},
-  aswp:{label:"ASWP",name:"Asian Web Protocol",scope:"Asia",icon:"◈"},
-  afwp:{label:"AFWP",name:"African Web Protocol",scope:"Africa",icon:"◆"},
-  ocwp:{label:"OCWP",name:"Oceania Web Protocol",scope:"Oceania",icon:"◌"}
-};
+const PROTOCOLS=[
+ {id:"httc",label:"HTTC",title:"HyperText Transfer for the Common Web",scope:"Universal",symbol:"◎"},
+ {id:"amwp",label:"AMWP",title:"American Web Protocol",scope:"Americas",symbol:"◉"},
+ {id:"euwp",label:"EUWP",title:"European Web Protocol",scope:"Europe",symbol:"◇"},
+ {id:"aswp",label:"ASWP",title:"Asian Web Protocol",scope:"Asia",symbol:"◈"},
+ {id:"afwp",label:"AFWP",title:"African Web Protocol",scope:"Africa",symbol:"◆"},
+ {id:"ocwp",label:"OCWP",title:"Oceania Web Protocol",scope:"Oceania",symbol:"◌"}
+];
+const P=new Map(PROTOCOLS.map(x=>[x.id,x]));
+const SYSTEM=["home","new","projects","bookmarks","history","protocols","settings"];
 const uid=()=>crypto.randomUUID();
-const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||"null")??d}catch{return d}};
+const read=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
 const write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const proto=u=>String(u).match(/^([a-z][a-z0-9+.-]*):\/\//i)?.[1]?.toLowerCase()||"";
 const host=u=>{try{return new URL(u).hostname.toLowerCase()}catch{return""}};
-const protocol=u=>{const m=String(u).match(/^([a-z][\w+.-]*):\/\//i);return m?m[1].toLowerCase():""};
-const normalizeInput=s=>{
-  s=String(s||"").trim();
-  if(!s)return HOME;
-  if(/^dumb:\/\//i.test(s))return"dumb://"+s.slice(7).toLowerCase();
-  if(/^https?:\/\//i.test(s))return s;
-  if(/^(httc|amwp|euwp|aswp|afwp|ocwp):\/\//i.test(s))return s.replace(/^([A-Za-z]+):/,(m,p)=>p.toLowerCase()+":");
-  if(s.includes(".")&&/^[\w.-]+(?:\/.*)?$/i.test(s))return"httc://"+s;
-  if(/^\s*[a-z0-9.-]+\s*$/i.test(s)&&s.includes("."))return"httc://"+s;
-  return"https://www.google.com/search?q="+encodeURIComponent(s);
+const isInternal=u=>u.startsWith("dumb://");
+const normalize=v=>{
+ let s=String(v||"").trim(); if(!s)return"dumb://home";
+ if(/^dumb:\/\//i.test(s))return"dumb://"+s.slice(7);
+ if(/^(https?|httc|amwp|euwp|aswp|afwp|ocwp):\/\//i.test(s))return s.replace(/^([A-Z]+):/i,(_,x)=>x.toLowerCase()+":");
+ if(/^[\w.-]+\.[a-z]{2,}(?:\/.*)?$/i.test(s))return"httc://"+s;
+ return"https://www.google.com/search?q="+encodeURIComponent(s);
 };
-const externalTarget=u=>/^(httc|amwp|euwp|aswp|afwp|ocwp):\/\//i.test(u)?"https://"+u.replace(/^[a-z]+:\/\//i,""):u;
-const ext=p=>(p.split(".").pop()||"").toLowerCase();
-const mime=p=>({html:"text/html",css:"text/css",js:"text/javascript",json:"application/json",svg:"image/svg+xml",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",webp:"image/webp",txt:"text/plain"}[ext(p)]||"application/octet-stream");
-const data=(p,v)=>typeof v==="string"?"data:"+mime(p)+";charset=utf-8,"+encodeURIComponent(v):"data:"+mime(p)+";base64,"+btoa(String.fromCharCode(...Uint8Array.from(v?.data||[])));
-const preview=(p,h)=>String(h).replace(/(src|href)=([\"'])([^\"']+)\2/gi,(m,a,q,r)=>{if(/^(data:|https?:|\/\/|#|mailto:)/i.test(r))return m;const k=r.replace(/^\//,"");return p.files[k]===undefined?m:a+"="+q+data(k,p.files[k])+q});
-const pageTitle=(u,ps)=>{
-  const h=host(u);
-  if(h==="home")return"Inicio";
-  if(h==="create")return"Develope";
-  if(PROTOCOLS[protocol(u)])return h||u;
-  return ps.find(p=>p.domain===h)?.name||h||u;
+const external=u=>P.has(proto(u))?"https://"+u.replace(/^[a-z]+:\/\//i,""):u;
+const titleFor=(u,projects=[])=>{
+ const h=host(u); if(h==="home")return"Inicio"; if(h==="new")return"Develope";
+ if(SYSTEM.includes(h))return h[0].toUpperCase()+h.slice(1);
+ return projects.find(x=>x.domain===h)?.name||h||"Nueva pestaña";
 };
 
 function App(){
-  const[projects,setProjects]=useState([]);
-  const[url,setUrl]=useState(()=>read("dn-url",HOME));
-  const[tabs,setTabs]=useState(()=>read("dn-tabs",[{id:uid(),url:HOME,title:"Inicio"}]));
-  const[active,setActive]=useState(()=>read("dn-active",0));
-  const[bookmarks,setBookmarks]=useState(()=>read("dn-bm",[]));
-  const[history,setHistory]=useState(()=>read("dn-history",[]));
-  const[ready,setReady]=useState(false);
-  useEffect(()=>{getProjects().then(setProjects).finally(()=>setReady(true))},[]);
-  useEffect(()=>write("dn-tabs",tabs),[tabs]);useEffect(()=>write("dn-active",active),[active]);useEffect(()=>write("dn-url",url),[url]);useEffect(()=>write("dn-bm",bookmarks),[bookmarks]);useEffect(()=>write("dn-history",history),[history]);
-  const go=input=>{
-    const u=normalizeInput(input);
-    setUrl(u);
-    setTabs(t=>t.map((a,i)=>i===active?{...a,url:u,title:pageTitle(u,projects)}:a));
-    setHistory(h=>[{url:u,title:pageTitle(u,projects),at:Date.now()},...h.filter(x=>x.url!==u)].slice(0,100));
-  };
-  const save=async p=>{await putProject(p);setProjects(await getProjects());go("dumb://"+p.domain)};
-  const del=async id=>{await removeProject(id);setProjects(await getProjects());go("dumb://projects")};
-  if(!ready)return <div className="boot"><span>d</span><small>cargando dumbNavigator</small></div>;
-  return <div className="app">
-    <Chrome tabs={tabs} active={active} setActive={i=>{setActive(i);setUrl(tabs[i].url)}} add={()=>{setTabs(t=>[...t,{id:uid(),url:HOME,title:"Inicio"}]);setActive(tabs.length)}} close={i=>{if(tabs.length>1){setTabs(t=>t.filter((_,n)=>n!==i));setActive(a=>Math.max(0,Math.min(a-(i<a?1:0),tabs.length-2)))}}} url={url} go={go} bookmarks={bookmarks} setBookmarks={setBookmarks}/>
-    <main className="viewport"><Page url={url} projects={projects} bookmarks={bookmarks} setBookmarks={setBookmarks} history={history} go={go} save={save} del={del}/></main>
-  </div>
+ const[projects,setProjects]=useState([]);
+ const[active,setActive]=useState(0);
+ const[tabs,setTabs]=useState(()=>read("dn.tabs",[{id:uid(),url:"dumb://home",title:"Inicio"}]));
+ const[bookmarks,setBookmarks]=useState(()=>read("dn.bookmarks",[]));
+ const[history,setHistory]=useState(()=>read("dn.history",[]));
+ const ready=useProjects(setProjects);
+ useEffect(()=>write("dn.tabs",tabs),[tabs]);useEffect(()=>write("dn.bookmarks",bookmarks),[bookmarks]);useEffect(()=>write("dn.history",history),[history]);
+ const url=tabs[active]?.url||"dumb://home";
+ const navigate=u=>{
+   const next=normalize(u);
+   setTabs(t=>t.map((x,i)=>i===active?{...x,url:next,title:titleFor(next,projects)}:x));
+   setHistory(h=>[{url:next,title:titleFor(next,projects),time:Date.now()},...h.filter(x=>x.url!==next)].slice(0,100));
+ };
+ const newTab=()=>{setTabs(t=>[...t,{id:uid(),url:"dumb://home",title:"Inicio"}]);setActive(tabs.length)};
+ const closeTab=i=>{if(tabs.length===1)return;setTabs(t=>t.filter((_,n)=>n!==i));setActive(a=>a>i?a-1:Math.min(a,tabs.length-2))};
+ if(!ready)return <div className="loading"><b>d</b><span>iniciando dumbNavigator</span></div>;
+ return <div className="app">
+  <BrowserBar tabs={tabs}active={active}onTab={setActive}onNew={newTab}onClose={closeTab}url={url}navigate={navigate}bookmarks={bookmarks}setBookmarks={setBookmarks}/>
+  <div className="content"><Router url={url}projects={projects}setProjects={setProjects}bookmarks={bookmarks}setBookmarks={setBookmarks}history={history}navigate={navigate}/></div>
+ </div>
 }
-
-function Chrome({tabs,active,setActive,add,close,url,go,bookmarks,setBookmarks}){
-  const[q,setQ]=useState(url);const[menu,setMenu]=useState(false);useEffect(()=>setQ(url),[url]);
-  const submit=e=>{e.preventDefault();go(q)};
-  const fav=bookmarks.some(x=>x.url===url);
-  return <header className="chrome">
-    <div className="tabs"><button className="brand" onClick={()=>go(HOME)}>d</button>{tabs.map((t,i)=><div className={"tab "+(i===active?"active":"")} key={t.id} onClick={()=>setActive(i)}><span>{t.title}</span>{tabs.length>1&&<button onClick={e=>{e.stopPropagation();close(i)}}>×</button>}</div>)}<button className="new" onClick={add}>+</button></div>
-    <div className="toolbar">
-      <button onClick={()=>window.history.back()} aria-label="Atrás">‹</button><button onClick={()=>window.history.forward()} aria-label="Adelante">›</button><button onClick={()=>go(url)} aria-label="Recargar">↻</button>
-      <form className="address" onSubmit={submit}><span className={"protocol-dot "+(PROTOCOLS[protocol(q)]?"known":"")}></span><input value={q} onChange={e=>setQ(e.target.value)} spellCheck="false"/><kbd>↵</kbd></form>
-      <button className="iconbtn" onClick={()=>setBookmarks(fav?bookmarks.filter(x=>x.url!==url):[...bookmarks,{url,title:pageTitle(url,[])}])}>{fav?"★":"☆"}</button>
-      <button className="iconbtn" onClick={()=>setMenu(!menu)}>☰</button>
-    </div>
-    {menu&&<nav className="menu">{[["⌂","Inicio",HOME],["✦","Develope",CREATE],["▦","Proyectos","dumb://projects"],["☆","Marcadores","dumb://bookmarks"],["◷","Historial","dumb://history"],["◎","Protocolos","dumb://protocols"],["⚙","Ajustes","dumb://settings"]].map(x=><button key={x[1]} onClick={()=>{setMenu(false);go(x[2])}}><i>{x[0]}</i>{x[1]}</button>)}</nav>}
-  </header>
+function useProjects(set){
+ const[ready,setReady]=useState(false);
+ useEffect(()=>{loadProjects().then(set).finally(()=>setReady(true))},[set]);return ready;
 }
-
-function Page({url,projects,bookmarks,setBookmarks,history,go,save,del}){
-  const h=host(url);
-  if(h==="home")return <Home projects={projects} go={go}/>;
-  if(h==="create")return <Developer save={save} go={go}/>;
-  if(h==="projects")return <List title="Proyectos" eyebrow="TU INTERNET" items={projects} go={go} del={del} create/empty="Todavía no tienes proyectos."/>;
-  if(h==="bookmarks")return <List title="Marcadores" eyebrow="LIBRARY" items={bookmarks} go={go} setBookmarks={setBookmarks} empty="No hay marcadores."/>;
-  if(h==="history")return <History items={history} go={go}/>;
-  if(h==="settings")return <Settings/>;
-  if(h==="protocols")return <Protocols go={go}/>;
-  if(/^https?:/i.test(url)||PROTOCOLS[protocol(url)])return <External url={url}/>;
-  const p=projects.find(x=>x.domain===h);return p?<Local p={p} url={url}/>:<NotFound url={url} go={go}/>;
+function BrowserBar({tabs,active,onTab,onNew,onClose,url,navigate,bookmarks,setBookmarks}){
+ const[value,setValue]=useState(url);const[menu,setMenu]=useState(false);useEffect(()=>setValue(url),[url]);
+ const marked=bookmarks.some(x=>x.url===url);
+ const submit=e=>{e.preventDefault();navigate(value)};
+ return <header className="browser">
+  <div className="tabs"><button className="logo"onClick={()=>navigate("dumb://home")}>d</button>{tabs.map((t,i)=><button className={"tab "+(i===active?"selected":"")}key={t.id}onClick={()=>onTab(i)}><span>{t.title}</span>{tabs.length>1&&<i onClick={e=>{e.stopPropagation();onClose(i)}}>×</i>}</button>)}<button className="plus"onClick={onNew}>+</button></div>
+  <div className="toolbar"><button onClick={()=>history.back()}>‹</button><button onClick={()=>history.forward()}>›</button><button onClick={()=>navigate(url)}>↻</button><form onSubmit={submit}><span className={P.has(proto(value))||isInternal(value)?"live":""}></span><input value={value}onChange={e=>setValue(e.target.value)}spellCheck="false"/><kbd>enter</kbd></form><button onClick={()=>setBookmarks(marked?bookmarks.filter(x=>x.url!==url):[...bookmarks,{url,title:url}])}>{marked?"★":"☆"}</button><button onClick={()=>setMenu(!menu)}>☰</button></div>
+  {menu&&<div className="menu">{[["⌂","Inicio","dumb://home"],["✦","Develope","dumb://new"],["▦","Proyectos","dumb://projects"],["☆","Marcadores","dumb://bookmarks"],["◷","Historial","dumb://history"],["◎","Protocolos","dumb://protocols"],["⚙","Ajustes","dumb://settings"]].map(([i,n,u])=><button key={u}onClick={()=>{setMenu(false);navigate(u)}}><b>{i}</b>{n}</button>)}</div>}
+ </header>
 }
-
-function Home({projects,go}){
-  const[q,setQ]=useState("");
-  return <div className="home">
-    <div className="home-grid"><section className="hero"><div className="eyebrow"><span className="pulse"></span>DUMBNAVIGATOR / WEB ENGINE</div><h1>internet,<br/><em>a tu manera.</em></h1><p>Un navegador experimental con una capa local <b>dumb://</b> y una familia de protocolos regionales para la web.</p>
-      <form className="searchbox" onSubmit={e=>{e.preventDefault();go(q)}}><span>⌕</span><input value={q} onChange={e=>setQ(e.target.value)} placeholder="buscar o escribir una dirección" autoFocus/><button>→</button></form>
-      <div className="quick"><button onClick={()=>go(CREATE)}><span>✦</span><b>Develope</b><small>crea y publica webs</small></button><button onClick={()=>go("dumb://protocols")}><span>◎</span><b>Protocolos</b><small>HTTC + 5 regiones</small></button><button onClick={()=>go("dumb://projects")}><span>▦</span><b>Proyectos</b><small>{projects.length} guardados</small></button></div>
-    </section><aside className="home-side"><div className="orb"><span>d</span></div><div><small>ROUTER</small><strong>HTTC</strong><p>un protocolo común para conectar la web sin perder las rutas regionales.</p></div></aside></div>
-    <section className="protocol-strip"><div><small>PROTOCOLOS DISPONIBLES</small><h2>una web, seis puertas.</h2></div><div className="protocols-mini">{Object.entries(PROTOCOLS).map(([id,p])=><button key={id} onClick={()=>go(id+"://example.com")}><i>{p.icon}</i><b>{p.label}</b><small>{p.scope}</small></button>)}</div></section>
-    {projects.length>0&&<section className="recent"><small>TUS WEBS</small><h2>Internet local</h2>{projects.slice(0,5).map(p=><button className="site" key={p.id} onClick={()=>go("dumb://"+p.domain)}><strong>{p.name[0]?.toUpperCase()||"W"}</strong><span><b>{p.name}</b><small>dumb://{p.domain}</small></span>→</button>)}</section>}
-  </div>
+function Router({url,projects,setProjects,bookmarks,setBookmarks,history,navigate}){
+ const h=host(url);
+ if(h==="home")return <Home projects={projects}navigate={navigate}/>;
+ if(h==="new")return <Developer navigate={navigate}setProjects={setProjects}/>;
+ if(h==="projects")return <ProjectList projects={projects}navigate={navigate}setProjects={setProjects}/>;
+ if(h==="bookmarks")return <BookmarkList items={bookmarks}setItems={setBookmarks}navigate={navigate}/>;
+ if(h==="history")return <History items={history}navigate={navigate}/>;
+ if(h==="protocols")return <Protocols navigate={navigate}/>;
+ if(h==="settings")return <Settings/>;
+ if(/^https?:/i.test(url)||P.has(proto(url)))return <External url={url}/>;
+ const project=projects.find(x=>x.domain===h);return project?<LocalSite project={project}url={url}/>:<NotFound navigate={navigate}/>;
 }
-
+function Home({projects,navigate}){
+ const[q,setQ]=useState("");
+ return <div className="home"><div className="home-main"><section><div className="eyebrow">DUMBNAVIGATOR · WEB ENGINE</div><h1>internet,<br/><em>a tu manera.</em></h1><p>Un navegador experimental con <b>dumb://</b> como espacio local y una familia de protocolos para organizar la web.</p><form className="search"onSubmit={e=>{e.preventDefault();navigate(q)}}><span>⌕</span><input value={q}onChange={e=>setQ(e.target.value)}placeholder="buscar o escribir una dirección"/><button>→</button></form><div className="cards"><button onClick={()=>navigate("dumb://new")}><b>✦ Develope</b><small>crea y publica tu web</small></button><button onClick={()=>navigate("dumb://protocols")}><b>◎ Protocolos</b><small>HTTC + 5 rutas regionales</small></button><button onClick={()=>navigate("dumb://projects")}><b>▦ Proyectos</b><small>{projects.length} guardados</small></button></div></section><aside><div className="orb">d</div><small>ROUTER</small><strong>HTTC</strong><p>La puerta universal del ecosistema.</p></aside></div><section className="network"><div><small>NETWORK</small><h2>una web, seis puertas.</h2></div><div className="proto-mini">{PROTOCOLS.map(x=><button key={x.id}onClick={()=>navigate(x.id+"://example.com")}><b>{x.symbol} {x.label}</b><small>{x.scope}</small></button>)}</div></section></div>
+}
 function External({url}){
-  const pr=protocol(url),meta=PROTOCOLS[pr],target=externalTarget(url);
-  return <div className="external"><div className="external-card"><div className="external-mark">{meta?.icon||"↗"}</div><div className="eyebrow">{meta?meta.label+" / "+meta.scope:"WEB EXTERNA"}</div><h1>{host(url)}</h1><p>{meta?<>Esta dirección usa <b>{meta.label}</b>, una ruta de dumbNavigator para la web {meta.scope.toLowerCase()}. El destino final se abre fuera del motor local.</>:<>Esta dirección apunta a la web externa.</>}</p><code>{url}</code><a href={target} target="_blank" rel="noreferrer">Abrir destino ↗</a></div></div>
+ const id=proto(url),meta=P.get(id);
+ return <div className="external"><div><span className="big-symbol">{meta?.symbol||"↗"}</span><div className="eyebrow">{meta?meta.label+" · "+meta.scope:"WEB EXTERNA"}</div><h1>{host(url)}</h1><p>{meta?"Esta dirección usa la capa experimental de dumbNavigator y se traduce a HTTPS para llegar al destino.":"Esta dirección pertenece a la web externa."}</p><code>{url}</code><a href={external(url)}target="_blank"rel="noreferrer">Abrir destino ↗</a></div></div>
 }
-
-function Protocols({go}){return <div className="dark protocols-page"><header><div><small>NETWORK ARCHITECTURE</small><h1>Protocolos</h1><p>La capa de direccionamiento experimental de dumbNavigator.</p></div></header><div className="protocol-grid">{Object.entries(PROTOCOLS).map(([id,p])=><article key={id}><div className="proto-icon">{p.icon}</div><div><span>{p.label}</span><h2>{p.name}</h2><p>Esquema <code>{id}://</code> · ámbito {p.scope}.</p><button onClick={()=>go(id+"://example.com")}>Probar dirección →</button></div></article>)}</div><div className="architecture"><b>HTTC</b><span>→</span><span>AMWP</span><span>EUWP</span><span>ASWP</span><span>AFWP</span><span>OCWP</span></div></div>}
-
-function List({title,eyebrow,items,go,del,setBookmarks,create,empty}){return <div className="dark"><header><div><small>{eyebrow}</small><h1>{title}</h1></div>{create&&<button onClick={()=>go(CREATE)}>＋ nuevo</button>}</header>{items.map(x=>{const u=x.url||"dumb://"+x.domain;return <div className="row" key={x.id||u} onClick={()=>go(u)}><strong>{(x.name||x.title||"W")[0].toUpperCase()}</strong><span><b>{x.name||x.title||u}</b><small>{u}</small></span><button onClick={e=>{e.stopPropagation();del?del(x.id):setBookmarks(items.filter(y=>(y.url||"")!==u))}}>×</button></div>})}{!items.length&&<div className="empty">{empty}</div>}</div>}
-
-function History({items,go}){return <div className="dark"><header><div><small>LIBRARY</small><h1>Historial</h1></div></header>{items.length?items.map((x,i)=><button className="history" key={i} onClick={()=>go(x.url)}><time>{new Date(x.at).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})}</time><span>{x.title}</span><small>{x.url}</small></button>):<div className="empty">Tu historial está limpio.</div>}</div>}
-
-function Settings(){return <div className="dark"><header><div><small>SYSTEM</small><h1>Ajustes</h1></div></header><div className="settings-grid"><article><span>VERSION</span><b>dumbNavigator 4</b><p>Motor local React + Vite, almacenamiento local e infraestructura Cloudflare.</p></article><article><span>SESIONES</span><b>Persistentes</b><p>Pestañas, favoritos e historial se guardan en este dispositivo.</p></article><article><span>PUBLICACIÓN</span><b>Cloudflare D1</b><p>Develope puede publicar proyectos estáticos en <code>/sites/&lt;dominio&gt;/</code>.</p></article></div></div>}
-
-function Developer({save,go}){
-  const initial={id:uid(),name:"Mi web",domain:"my-site",entry:"index.html",files:{
-    "index.html":"<!doctype html>\n<html lang=\"es\">\n<head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><link rel=\"stylesheet\" href=\"style.css\"></head>\n<body><main><span>DEVELOPE</span><h1>Hola, internet.</h1><p>Esta página vive dentro de dumbNavigator.</p><a href=\"https://example.com\">salir a la web →</a></main></body></html>",
-    "style.css":"body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0d1017;color:#f5f6f8;font-family:system-ui,sans-serif}main{width:min(760px,86vw)}span{font:700 11px monospace;letter-spacing:.2em;opacity:.55}h1{font-size:clamp(48px,9vw,110px);letter-spacing:-.08em;margin:.2em 0}p{color:#9aa2ae;font-size:18px}a{color:#fff;text-decoration:none}"
-  }};
-  const[p,setP]=useState(initial),[file,setFile]=useState("index.html"),[pub,setPub]=useState("");
-  const files=Object.keys(p.files).sort();
-  const update=(patch)=>setP(x=>({...x,...patch}));
-  const add=()=>{const n=prompt("Nombre del archivo","script.js");if(n&&!p.files[n]){update({files:{...p.files,[n]:""}});setFile(n)}};
-  const saveLocal=async()=>{const q={...p,name:p.name.trim()||"Mi web",domain:p.domain.toLowerCase().replace(/[^a-z0-9.-]/g,"")||"my-site",updatedAt:Date.now()};if(RESERVED.has(q.domain))return alert("Ese dominio está reservado.");await save(q);setP(q)};
-  const publish=async()=>{await saveLocal();const token=localStorage.getItem("dn-token-"+p.domain);const r=await fetch("/api/sites",{method:"POST",headers:{"content-type":"application/json",...(token?{"x-publish-token":token}:{})},body:JSON.stringify({name:p.name,domain:p.domain,type:"static",entry:p.entry,files:p.files})});const d=await r.json();if(!r.ok)return alert(d.error||"No se pudo publicar.");if(d.token)localStorage.setItem("dn-token-"+p.domain,d.token);setPub(d.publicUrl)};
-  return <div className="dev"><aside><button className="devbrand" onClick={()=>go(HOME)}><b>d</b><span><strong>develope</strong><small>studio</small></span></button><div className="field"><label>DOMINIO</label><input value={p.domain} onChange={e=>update({domain:e.target.value})}/></div><div className="field"><label>NOMBRE</label><input value={p.name} onChange={e=>update({name:e.target.value})}/></div><button className="fileadd" onClick={add}>＋ archivo</button><div className="files">{files.map(f=><button className={file===f?"sel":""} key={f} onClick={()=>setFile(f)}>{f}</button>)}</div><button className="back" onClick={()=>go(HOME)}>← navegador</button></aside>
-    <main><header><div><small>DEPLOYMENT STUDIO</small><h2>{p.name}</h2></div><div className="dev-actions"><button onClick={saveLocal}>guardar</button><button className="accent" onClick={publish}>↑ publicar</button></div></header><div className="work"><section><div className="panel-title">{file}</div><textarea value={p.files[file]} onChange={e=>update({files:{...p.files,[file]:e.target.value}})} spellCheck="false"/></section><section><div className="panel-title">LIVE PREVIEW</div>{file.endsWith(".html")?<iframe title="preview" sandbox="allow-scripts allow-forms allow-modals" srcDoc={preview(p,p.files[file])}/>:<pre>{p.files[file]}</pre>}</section></div>{pub&&<div className="published">Publicado · <a href={pub} target="_blank" rel="noreferrer">{pub}</a></div>}</main></div>
+function Protocols({navigate}){return <div className="dark"><header><div><small>NETWORK ARCHITECTURE</small><h1>Protocolos</h1><p>La arquitectura de direccionamiento de dumbNavigator.</p></div></header><div className="proto-grid">{PROTOCOLS.map(x=><article key={x.id}><b className="proto-symbol">{x.symbol}</b><div><small>{x.label}</small><h2>{x.title}</h2><p><code>{x.id}://</code> · ámbito {x.scope}.</p><button onClick={()=>navigate(x.id+"://example.com")}>Probar →</button></div></article>)}</div><div className="flow"><b>HTTC</b><span>→</span>{PROTOCOLS.slice(1).map(x=><span key={x.id}>{x.label}</span>)}</div></div>}
+function ProjectList({projects,navigate,setProjects}){return <div className="dark"><header><div><small>TU INTERNET</small><h1>Proyectos</h1></div><button onClick={()=>navigate("dumb://new")}>＋ nuevo</button></header>{projects.map(p=><div className="row"key={p.id}onClick={()=>navigate("dumb://"+p.domain)}><b>{p.name[0]?.toUpperCase()||"W"}</b><span><strong>{p.name}</strong><small>dumb://{p.domain}</small></span><button onClick={async e=>{e.stopPropagation();await deleteProject(p.id);setProjects(await loadProjects())}}>×</button></div>)}{!projects.length&&<div className="empty">Todavía no hay proyectos.</div>}</div>}
+function BookmarkList({items,setItems,navigate}){return <div className="dark"><header><div><small>LIBRARY</small><h1>Marcadores</h1></div></header>{items.map(x=><div className="row"key={x.url}onClick={()=>navigate(x.url)}><b>☆</b><span><strong>{x.title||x.url}</strong><small>{x.url}</small></span><button onClick={e=>{e.stopPropagation();setItems(items.filter(y=>y.url!==x.url))}}>×</button></div>)}{!items.length&&<div className="empty">No hay marcadores.</div>}</div>}
+function History({items,navigate}){return <div className="dark"><header><div><small>LIBRARY</small><h1>Historial</h1></div></header>{items.map(x=><button className="history"key={x.time}onClick={()=>navigate(x.url)}><time>{new Date(x.time).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})}</time><span>{x.title}</span><small>{x.url}</small></button>)}{!items.length&&<div className="empty">El historial está limpio.</div>}</div>}
+function Settings(){return <div className="dark"><header><div><small>SYSTEM</small><h1>Ajustes</h1></div></header><div className="settings"><article><small>VERSION</small><b>5.0</b><p>Frontend reconstruido desde cero.</p></article><article><small>DATOS LOCALES</small><b>IndexedDB</b><p>Los proyectos locales viven en el almacenamiento del navegador.</p></article><article><small>PUBLICACIÓN</small><b>Cloudflare D1</b><p>La base de datos pública conserva sitios y archivos publicados.</p></article></div></div>}
+function Developer({navigate,setProjects}){
+ const fresh=()=>({id:uid(),name:"Mi web",domain:"mi-web",entry:"index.html",files:{"index.html":"<!doctype html>\n<html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><link rel=\"stylesheet\" href=\"style.css\"></head><body><main><span>DUMBNAVIGATOR</span><h1>Hola, internet.</h1><p>Tu primera web.</p></main></body></html>","style.css":"body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b0e13;color:#f4f5f7;font-family:system-ui,sans-serif}main{width:min(760px,86vw)}span{font:700 10px monospace;letter-spacing:.2em;color:#8992a0}h1{font-size:clamp(48px,9vw,110px);letter-spacing:-.08em;margin:.15em 0}p{color:#8b94a2}"}})();
+ const[project,setProject]=useState(fresh),[file,setFile]=useState("index.html"),[message,setMessage]=useState("");
+ const files=Object.keys(project.files).sort();
+ const patch=x=>setProject(p=>({...p,...x}));
+ const persist=async()=>{const p={...project,name:project.name.trim()||"Mi web",domain:project.domain.toLowerCase().replace(/[^a-z0-9.-]/g,"")||"mi-web",updatedAt:Date.now()};await saveProject(p);setProjects(await loadProjects());setProject(p);setMessage("guardado en este dispositivo")};
+ const publish=async()=>{const p={...project,name:project.name.trim()||"Mi web",domain:project.domain.toLowerCase().replace(/[^a-z0-9.-]/g,"")||"mi-web",updatedAt:Date.now()};const token=localStorage.getItem("dn.token."+p.domain)||"";const r=await fetch("/api/sites",{method:"POST",headers:{"content-type":"application/json",...(token?{"x-publish-token":token}:{})},body:JSON.stringify(p)});const d=await r.json();if(!r.ok){setMessage(d.error||"error al publicar");return}if(d.token)localStorage.setItem("dn.token."+p.domain,d.token);await saveProject(p);setProjects(await loadProjects());setProject(p);setMessage("publicado · "+d.publicUrl)};
+ const add=()=>{const n=prompt("nombre del archivo","script.js");if(n&&!project.files[n]){patch({files:{...project.files,[n]:""}});setFile(n)}};
+ return <div className="developer"><aside><button className="dev-logo"onClick={()=>navigate("dumb://home")}><b>d</b><span><strong>develope</strong><small>studio</small></span></button><label>DOMINIO<input value={project.domain}onChange={e=>patch({domain:e.target.value})}/></label><label>NOMBRE<input value={project.name}onChange={e=>patch({name:e.target.value})}/></label><button className="add-file"onClick={add}>＋ archivo</button><nav>{files.map(f=><button className={f===file?"current":""}key={f}onClick={()=>setFile(f)}>{f}</button>)}</nav><button className="back"onClick={()=>navigate("dumb://home")}>← navegador</button></aside><main><header><div><small>DEPLOYMENT STUDIO</small><h2>{project.name}</h2></div><div><button onClick={persist}>guardar</button><button className="publish"onClick={publish}>↑ publicar</button></div></header><div className="editor"><section><header>{file}</header><textarea value={project.files[file]}onChange={e=>patch({files:{...project.files,[file]:e.target.value}})}spellCheck="false"/></section><section><header>PREVIEW</header>{file.endsWith(".html")?<iframe title="preview"sandbox="allow-scripts allow-forms allow-modals"srcDoc={project.files[file]}/>:<pre>{project.files[file]}</pre>}</section></div>{message&&<div className="status">{message}</div>}</main></div>
 }
-
-function Local({p,url}){const path=decodeURIComponent(new URL(url).pathname.replace(/^\//,""))||p.entry,f=p.files[path]??p.files[p.entry];if(f===undefined)return <NotFound url={url}/>;return ext(path)==="html"&&typeof f==="string"?<iframe className="siteframe" title={p.name} sandbox="allow-scripts allow-forms allow-modals" srcDoc={preview(p,f)}/>:<pre className="raw">{typeof f==="string"?f:"[archivo binario]"}</pre>}
-function NotFound({url,go}){return <div className="notfound"><small>DUMBNAVIGATOR · 404</small><h1>no existe.</h1><p>{url}</p><button onClick={()=>go(HOME)}>volver al inicio</button></div>}
+function LocalSite({project,url}){const path=decodeURIComponent(new URL(url).pathname.replace(/^\//,""))||project.entry;const source=project.files[path]??project.files[project.entry];if(source==null)return <NotFound/>;return path.endsWith(".html")?<iframe className="site" title={project.name}sandbox="allow-scripts allow-forms allow-modals"srcDoc={source}/>:<pre className="raw">{source}</pre>}
+function NotFound({navigate}){return <div className="notfound"><small>404 · DUMBNAVIGATOR</small><h1>no existe.</h1><button onClick={()=>navigate?.("dumb://home")}>volver</button></div>}
 
 createRoot(document.getElementById("root")).render(<App/>);
