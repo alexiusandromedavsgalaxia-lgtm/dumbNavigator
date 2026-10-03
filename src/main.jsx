@@ -1,4 +1,4 @@
-import React,{useEffect,useMemo,useState}from"react";
+import React,{useEffect,useState}from"react";
 import{createRoot}from"react-dom/client";
 import"./styles.css";
 import{loadProjects,saveProject,deleteProject}from"./storage.js";
@@ -104,7 +104,7 @@ function Developer({navigate,setProjects}){
  const add=()=>{const n=prompt("nombre del archivo","script.js");if(n&&!project.files[n]){patch({files:{...project.files,[n]:""}});setFile(n)}};
  return <div className="developer"><aside><button className="dev-logo"onClick={()=>navigate("dumb://home")}><b>d</b><span><strong>develope</strong><small>studio</small></span></button><label>DOMINIO<input value={project.domain}onChange={e=>patch({domain:e.target.value})}/></label><label>NOMBRE<input value={project.name}onChange={e=>patch({name:e.target.value})}/></label><button className="add-file"onClick={add}>＋ archivo</button><nav>{files.map(f=><button className={f===file?"current":""}key={f}onClick={()=>setFile(f)}>{f}</button>)}</nav><button className="back"onClick={()=>navigate("dumb://home")}>← navegador</button></aside><main><header><div><small>DEPLOYMENT STUDIO</small><h2>{project.name}</h2></div><div><button onClick={persist}>guardar</button><button className="publish"onClick={publish}>↑ publicar</button></div></header><div className="editor"><section><header>{file}</header><textarea value={project.files[file]}onChange={e=>patch({files:{...project.files,[file]:e.target.value}})}spellCheck="false"/></section><section><header>PREVIEW</header>{file.endsWith(".html")?<iframe title="preview"sandbox="allow-scripts allow-forms allow-modals"srcDoc={project.files[file]}/>:<pre>{project.files[file]}</pre>}</section></div>{message&&<div className="status">{message}</div>}</main></div>
 }
-function LocalSite({project,url}){const path=decodeURIComponent(new URL(url).pathname.replace(/^\//,""))||project.entry;const source=project.files[path]??project.files[project.entry];if(source==null)return <NotFound/>;return path.endsWith(".html")?<iframe className="site" title={project.name}sandbox="allow-scripts allow-forms allow-modals"srcDoc={source}/>:<pre className="raw">{source}</pre>}
+function LocalSite({project,url}){const path=decodeURIComponent(new URL(url).pathname.replace(/^\//,""))||project.entry;const source=project.files[path]??project.files[project.entry];if(source==null)return <NotFound/>;return path.endsWith(".html")?<iframe className="site" title={project.name} sandbox="allow-scripts allow-forms allow-modals"srcDoc={source}/>:<pre className="raw">{source}</pre>}
 function NotFound({navigate}){return <div className="notfound"><small>404 · DUMBNAVIGATOR</small><h1>no existe.</h1><button onClick={()=>navigate?.("dumb://home")}>volver</button></div>}
 
 createRoot(document.getElementById("root")).render(<App/>);
