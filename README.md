@@ -1,7 +1,30 @@
-# dumbNavigator 3
+# dumbNavigator
 
-Navegador web-first con espacios `dumb://` y estudio integrado **develope**. Las páginas creadas viven en IndexedDB y se pueden publicar con Pages Functions + D1.
+Navegador web experimental con una interfaz tipo browser y una capa de direccionamiento propia.
 
-Rutas: home, create/develope, projects, bookmarks, history, settings y dumb://<dominio>.
+## Direcciones
 
-Cloudflare Pages: `npm run build` → `dist`. Configura una binding D1 llamada `DB` y aplica `migrations/0001_public_sites.sql`.
+- `dumb://` · páginas y proyectos locales del navegador.
+- `httc://` · **HTTC**, protocolo universal para la web.
+- `amwp://` · American Web Protocol.
+- `euwp://` · European Web Protocol.
+- `aswp://` · Asian Web Protocol.
+- `afwp://` · African Web Protocol.
+- `ocwp://` · Oceania Web Protocol.
+
+Las rutas HTTC y regionales se resuelven hacia HTTPS al salir del motor local.
+
+## Develope
+
+Incluye un pequeño estudio para crear archivos HTML/CSS/JS, previsualizarlos y publicarlos mediante Cloudflare Pages Functions + D1.
+
+## Desarrollo
+
+```bash
+npm install
+npm run dev
+```
+
+```bash
+npm run build
+```
